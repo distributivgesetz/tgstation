@@ -129,7 +129,7 @@
 		pda_msgs += msg
 		signal.logged = msg
 	else if(istype(signal, /datum/signal/subspace/messaging/rc))
-		var/datum/data_rc_msg/msg = new(signal.data["rec_dpt"], signal.data["send_dpt"], signal.data["message"], signal.data["stamped"], signal.data["verified"], signal.data["priority"])
+		var/datum/data_rc_msg/msg = new(signal.data["rec_dpt"], signal.data["send_dpt"], signal.data["type"], signal.data["message"], signal.data["verified"], signal.data["priority"])
 		signal.logged = msg
 		if(signal.data["send_dpt"]) // don't log messages not from a department but allow them to work
 			rc_msgs += msg
@@ -191,7 +191,7 @@
 	var/rec_dpt = ckey(data["rec_dpt"])
 	for (var/obj/machinery/requests_console/Console in GLOB.allConsoles)
 		if(ckey(Console.department) == rec_dpt || (data["ore_update"] && Console.receive_ore_updates))
-			Console.createmessage(data["sender"], data["send_dpt"], data["message"], data["verified"], data["stamped"], data["priority"], data["notify_freq"])
+			Console.createmessage(data["send_dpt"], data["type"], data["message"], data["verified"], data["priority"])
 
 // Log datums stored by the message server.
 /datum/data_tablet_msg
@@ -225,20 +225,20 @@
 /datum/data_rc_msg
 	var/rec_dpt = "Unspecified"  // receiving department
 	var/send_dpt = "Unspecified"  // sending department
-	var/message = "Blank"
-	var/stamp = "Unstamped"
+	var/msg_type = "Assistance"
+	var/message = "No Message"
 	var/id_auth = "Unauthenticated"
 	var/priority = "Normal"
 
-/datum/data_rc_msg/New(param_rec, param_sender, param_message, param_stamp, param_id_auth, param_priority)
+/datum/data_rc_msg/New(param_rec, param_sender, param_type, param_message, param_id_auth, param_priority)
 	if(param_rec)
 		rec_dpt = param_rec
 	if(param_sender)
 		send_dpt = param_sender
 	if(param_message)
 		message = param_message
-	if(param_stamp)
-		stamp = param_stamp
+	if(param_type)
+		msg_type = param_type
 	if(param_id_auth)
 		id_auth = param_id_auth
 	if(param_priority)

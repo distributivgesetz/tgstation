@@ -1083,6 +1083,7 @@
 		"s_server",
 		"s_transmitter",
 		"s_treatment",
+		"rc-dongle"
 	)
 
 /datum/techweb_node/integrated_hud

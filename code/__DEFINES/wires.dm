@@ -53,3 +53,6 @@
 #define WIRE_AGELIMIT "Age Limit"
 #define WIRE_ACCEPT "Scan Success"
 #define WIRE_DENY "Scan Fail"
+#define WIRE_ANNOUNCE "Announcement"
+#define WIRE_PRIORITY "Priority"
+#define WIRE_EMERGENCY "Emergency"

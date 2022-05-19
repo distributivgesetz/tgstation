@@ -335,3 +335,13 @@
 	build_path = /obj/item/stock_parts/water_recycler
 	category = list("Stock Parts")
 	departmental_flags = DEPARTMENT_BITFLAG_ENGINEERING | DEPARTMENT_BITFLAG_SCIENCE | DEPARTMENT_BITFLAG_MEDICAL
+
+/datum/design/rc_announce_module
+	name = "Requests Console Announcement Module"
+	desc = "A dongle which holds encryption keys for the station's onboard announcement systems. It can be plugged into requests consoles."
+	id = "rc-dongle"
+	build_type = PROTOLATHE | AWAY_LATHE
+	materials = list(/datum/material/iron = 200, /datum/material/silver = 150, /datum/material/diamond = 50)
+	build_path = /obj/item/rc_announce_module
+	category = list("Stock Parts")
+	departmental_flags = DEPARTMENT_BITFLAG_ENGINEERING

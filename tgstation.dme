@@ -1184,6 +1184,7 @@
 #include "code\datums\wires\mulebot.dm"
 #include "code\datums\wires\r_n_d.dm"
 #include "code\datums\wires\radio.dm"
+#include "code\datums\wires\requestsconsole.dm"
 #include "code\datums\wires\robot.dm"
 #include "code\datums\wires\roulette.dm"
 #include "code\datums\wires\scanner_gate.dm"
