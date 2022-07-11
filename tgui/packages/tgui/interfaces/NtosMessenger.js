@@ -42,6 +42,8 @@ export const NtosMessenger = (props, context) => {
     photo,
     virus_attach,
     sending_virus,
+    centcom_messenger,
+    sending_pm,
   } = data;
   if (viewing_messages) {
     return (
@@ -139,6 +141,12 @@ export const NtosMessenger = (props, context) => {
                 content={`Sort by: ${sortByJob ? 'Job' : 'Name'}`}
                 onClick={() => act('PDA_changeSortStyle')}
               />
+              {!!centcom_messenger && (
+                <Button
+                  content={`High Priority PM: ${sending_pm ? 'Yes' : 'No'}`}
+                  onClick={() => act('PDA_toggleCentComMessage')}
+                />
+              )}
               {!!virus_attach && (
                 <Button
                   icon="bug"

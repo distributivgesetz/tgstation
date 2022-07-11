@@ -38,6 +38,8 @@
 	var/sort_by_job = TRUE
 	// Whether or not we're sending (or trying to send) a virus.
 	var/sending_virus = FALSE
+	// Whether we are in centcom private message mode
+	var/sending_centcom_pm = FALSE
 
 	/// The path for the current loaded image in rsc
 	var/photo_path
@@ -48,6 +50,8 @@
 	var/mime_mode = FALSE
 	/// Whether this app can send messages to all.
 	var/spam_mode = FALSE
+	/// Whether this app can send centcom private messages
+	var/centcom_mode = FALSE
 
 /datum/computer_file/program/messenger/proc/ScrubMessengerList()
 	var/list/dictionary = list()
@@ -177,7 +181,9 @@
 		if("PDA_toggleVirus")
 			sending_virus = !sending_virus
 			return(UI_UPDATE)
-
+		if("PDA_toggleCentComMessage")
+			sending_centcom_pm = !sending_centcom_pm
+			return(UI_UPDATE)
 
 /datum/computer_file/program/messenger/ui_data(mob/user)
 	var/list/data = get_header_data()
@@ -192,6 +198,8 @@
 	data["isSilicon"] = is_silicon
 	data["photo"] = photo_path
 	data["canSpam"] = spam_mode
+	data["centcom_messenger"] = centcom_mode
+	data["sending_pm"] = sending_centcom_pm
 
 	var/obj/item/computer_hardware/hard_drive/portable/virus/disk = computer.all_components[MC_SDD]
 	if(disk)
@@ -256,6 +264,8 @@
 	if (!string_targets.len)
 		return FALSE
 
+	var/iscentcompm = (centcom_mode && sending_centcom_pm)
+
 	var/datum/signal/subspace/messaging/tablet_msg/signal = new(computer, list(
 		"name" = fake_name || computer.saved_identification,
 		"job" = fake_job || computer.saved_job,
@@ -266,6 +276,7 @@
 		"rigged" = rigged,
 		"photo" = photo_path,
 		"automated" = FALSE,
+		"centcompm" = iscentcompm
 	))
 	if(rigged) //Will skip the message server and go straight to the hub so it can't be cheesed by disabling the message server machine
 		signal.data["rigged_user"] = REF(user) // Used for bomb logging
@@ -304,7 +315,7 @@
 	user.log_talk(message, LOG_PDA, tag="[rigged ? "Rigged" : ""] PDA: [message_data["name"]] to [signal.format_target()]")
 	if(rigged)
 		log_bomber(user, "sent a rigged PDA message (Name: [message_data["name"]]. Job: [message_data["job"]]) to [english_list(string_targets)] [!is_special_character(user) ? "(SENT BY NON-ANTAG)" : ""]")
-	to_chat(user, span_info("PDA message sent to [signal.format_target()]: [signal.format_message()]"))
+	to_chat(user, span_info("[iscentcompm ? "High Priority PM" : "PDA message"] sent to [signal.format_target()]: [signal.format_message()]"))
 
 	if (ringer_status)
 		computer.send_sound()
@@ -327,6 +338,7 @@
 	message_data["ref"] = signal.data["ref"]
 	message_data["automated"] = signal.data["automated"]
 	message_data["photo"] = signal.data["photo"]
+	message_data["centcompm"] = signal.data["centcompm"]
 	messages += list(message_data)
 
 	var/mob/living/L = null
@@ -351,9 +363,20 @@
 		if(signal.data["emojis"] == TRUE)//so will not parse emojis as such from pdas that don't send emojis
 			inbound_message = emoji_parse(inbound_message)
 
-		if(ringer_status && L.is_literate())
-			to_chat(L, "<span class='infoplain'>[icon2html(src)] <b>PDA message from [hrefstart][signal.data["name"]] ([signal.data["job"]])[hrefend], </b>[inbound_message] [reply]</span>")
+		if(L.is_literate())
+			// normal message
+			if(signal.data["centcompm"])
+				to_chat(L, "<font color='#005b0c' size='4'><b>-- Central Command High priority message --</b></font><br/>\
+					<font color='#00a016'><b>[signal.data["job"]] PM from-<b><a href='byond://?src=[REF(src)];choice=[signal.data["rigged"] ? "mess_us_up" : "Message"];skiprefresh=1;target=[signal.data["ref"]]'>[signal.data["name"]]</a></b>: [signal.data["message"]]</b></font><br/>\
+					<font color='#00a016'><b><i>Click on the [signal.data["job"]]'s name to reply.</i></b></font>")
 
+			// centcom bwoink
+			else if(ringer_status)
+				to_chat(L, "<span class='infoplain'>[icon2html(src)] <b>PDA message from [hrefstart][signal.data["name"]] ([signal.data["job"]])[hrefend], </b>[inbound_message] [reply]</span>")
+			// wait i messed up the comments fuck
+
+	if(signal.data["centcompm"])
+		playsound(holder.holder, 'sound/effects/adminhelp.ogg', 50)
 
 	if (ringer_status)
 		computer.ring(ringtone)

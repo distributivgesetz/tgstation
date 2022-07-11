@@ -384,3 +384,18 @@
 	greyscale_config = null
 	greyscale_colors = null
 
+/obj/item/modular_computer/tablet/pda/heads/centcom
+	greyscale_config = /datum/greyscale_config/tablet/head
+	greyscale_colors = "#67A364#a92323"
+	default_applications = list(
+		/datum/computer_file/program/crew_manifest,
+	)
+
+/obj/item/modular_computer/tablet/pda/heads/centcom/Initialize(mapload)
+	. = ..()
+	var/obj/item/computer_hardware/hard_drive/drive = all_components[MC_HDD]
+	if(!drive)
+		return
+	for(var/datum/computer_file/program/messenger/messenger_app in drive.stored_files)
+		messenger_app.centcom_mode = TRUE
+
