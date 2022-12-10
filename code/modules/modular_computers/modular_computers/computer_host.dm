@@ -53,6 +53,8 @@
 
 	///The theme, used for the main menu and file browser apps.
 	var/device_theme = "ntos"
+	///The menu icon state.
+	var/menu_state = "menu"
 
 	///Bool on whether the computer is currently active or not.
 	var/powered_on = FALSE

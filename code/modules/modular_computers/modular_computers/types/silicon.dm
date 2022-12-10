@@ -2,7 +2,7 @@
 	hardware_flag = PROGRAM_SILICON
 	///Base icon state to show on our button
 	var/device_icon_state = "tablet-silicon"
-	var/silicon_tablet_icon = 'obj/item/modular_pda.dmi'
+	var/silicon_tablet_icon = 'icons/obj/modular_pda.dmi'
 	///Initial
 	///Reference to our ui button for appearance updates
 	var/atom/movable/screen/button
@@ -36,9 +36,9 @@
 
 /datum/modular_computer_host/silicon/proc/do_button_overlay_update(atom/source, list/overlays)
 	SIGNAL_HANDLER
-	overlays += mutable_appearance(silicon_tablet_icon, device_icon)
+	overlays += mutable_appearance(silicon_tablet_icon, device_icon_state)
 	if(powered_on)
-		overlays += mutable_appearance(silicon_tablet_icon, )
+		overlays += mutable_appearance(silicon_tablet_icon, active_program ? active_program.program_icon_state : menu_state)
 
 //Integrated (Silicon) tablets don't drain power, because the tablet is required to state laws, so it being disabled WILL cause problems.
 /datum/modular_computer_host/silicon/check_power_override()
