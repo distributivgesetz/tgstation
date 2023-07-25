@@ -120,7 +120,6 @@
 	else
 		icon_state = initial(icon_state)
 		inhand_icon_state = initial(inhand_icon_state)
-	update_greyscale()
 
 /obj/item/clothing/shoes/sneakers/orange/attack_self(mob/user)
 	if(attached_cuffs)
