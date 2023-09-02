@@ -117,53 +117,52 @@
 	SSshuttle.emergency.setTimer(INFINITY)
 	// disallow shuttle recalls, so people cannot cheese the timer
 	SSshuttle.emergency_no_recall = TRUE
-	// set supermatter cascade to true, to prevent auto evacuation due to no way of calling the shuttle
-	SSshuttle.supermatter_cascade = TRUE
+	// revent auto evacuation due to no way of calling the shuttle
+	SSshuttle.no_auto_evac = TRUE
 	// set hijack completion timer to infinity, so that you cant prematurely end the round with a hijack
 	for(var/obj/machinery/computer/emergency_shuttle/console as anything in SSmachines.get_machines_by_type_and_subtypes(/obj/machinery/computer/emergency_shuttle))
 		console.hijack_completion_flight_time_set = INFINITY
 
-	/* This logic is to keep uncalled shuttles uncalled
-	In SSshuttle, there is not much of a way to prevent shuttle calls, unless we mess with admin panel vars
-	SHUTTLE_STRANDED is different here, because it *can* block the shuttle from being called, however if we don't register a hostile
-	environment, it gets unset immediately. Internally, it checks if the count of HEs is zero
-	and that the shuttle is in stranded mode, then frees it with an announcement.
-	This is a botched solution to a problem that could be solved with a small change in shuttle code, however-
-	*/
-	if(SSshuttle.emergency.mode == SHUTTLE_IDLE)
-		SSshuttle.emergency.mode = SHUTTLE_STRANDED
-		SSshuttle.registerHostileEnvironment(src)
-		return
-
 	// say goodbye to that shuttle of yours
-	if(SSshuttle.emergency.mode != SHUTTLE_ESCAPE)
-		priority_announce("Fatal error occurred in emergency shuttle uplink during transit. Unable to reestablish connection.",
-			"Emergency Shuttle Uplink Alert", 'sound/misc/announce_dig.ogg')
-	else
-	// except if you are on it already, then you are safe c:
-		minor_announce("ERROR: Corruption detected in navigation protocols. Connection with Transponder #XCC-P5831-ES13 lost. \
-				Backup exit route protocol decrypted. Calibrating route...",
-			"Emergency Shuttle", TRUE) // wait out until the rift on the station gets destroyed and the final message plays
-		var/list/mobs = mobs_in_area_type(list(/area/shuttle/escape))
-		for(var/mob/living/mob as anything in mobs) // emulate mob/living/lateShuttleMove() behaviour
-			if(mob.buckled)
-				continue
-			if(mob.client)
-				shake_camera(mob, 3 SECONDS * 0.25, 1)
-			mob.Paralyze(3 SECONDS, TRUE)
+	switch(SSshuttle.emergency.mode)
+		if(SHUTTLE_IDLE)
+			/* This logic is to keep uncalled shuttles uncalled
+			In SSshuttle, there is not much of a way to prevent shuttle calls, unless we mess with admin panel vars
+			SHUTTLE_STRANDED is different here, because it *can* block the shuttle from being called, however if we don't register a hostile
+			environment, it gets unset immediately. Internally, it checks if the count of HEs is zero
+			and that the shuttle is in stranded mode, then frees it with an announcement.
+			This is a botched solution to a problem that could be solved with a small change in shuttle code, however-
+			*/
+			SSshuttle.emergency.mode = SHUTTLE_STRANDED
+			SSshuttle.registerHostileEnvironment(src)
+		if(SHUTTLE_ESCAPE)
+			minor_announce("ERROR: Corruption detected in navigation protocols. Connection with Transponder #XCC-P5831-ES13 lost. \
+					Backup exit route protocol decrypted. Calibrating route...",
+				"Emergency Shuttle", TRUE) // wait out until the rift on the station gets destroyed and the final message plays
+			var/list/mobs = mobs_in_area_type(list(/area/shuttle/escape))
+			for(var/mob/living/mob as anything in mobs) // emulate mob/living/lateShuttleMove() behaviour
+				if(mob.buckled)
+					continue
+				if(mob.client)
+					shake_camera(mob, 3 SECONDS * 0.25, 1)
+				mob.Paralyze(3 SECONDS, TRUE)
+		else
+			priority_announce("Fatal error occurred in emergency shuttle uplink during transit. Unable to reestablish connection.",
+				"Emergency Shuttle Uplink Alert", 'sound/misc/announce_dig.ogg')
+
 
 /datum/sm_delam/proc/effect_cascade_demoralize()
-	for(var/mob/player as anything in GLOB.player_list)
-		if(!isdead(player))
-			var/mob/living/living_player = player
-			to_chat(player, span_boldannounce("Everything around you is resonating with a powerful energy. This can't be good."))
-			living_player.add_mood_event("cascade", /datum/mood_event/cascade)
-		SEND_SOUND(player, 'sound/magic/charge.ogg')
+	for(var/mob/victim as anything in GLOB.player_list)
+		victim.playsound_local(get_turf(victim), 'sound/magic/charge.ogg')
+		if(isliving(victim))
+			var/mob/living/living_victim = victim
+			to_chat(living_victim, span_boldannounce("Everything around you is resonating with a powerful energy. This can't be good."))
+			living_victim.add_mood_event("cascade", /datum/mood_event/cascade)
 
 /datum/sm_delam/proc/effect_emergency_state()
 	if(SSsecurity_level.get_current_level_as_number() != SEC_LEVEL_DELTA)
 		SSsecurity_level.set_level(SEC_LEVEL_DELTA) // skip the announcement and shuttle timer adjustment in set_security_level()
-	make_maint_all_access()
+	make_maint_all_access(announce = FALSE)
 	for(var/obj/machinery/light/light_to_break as anything in SSmachines.get_machines_by_type_and_subtypes(/obj/machinery/light))
 		if(prob(35))
 			light_to_break.set_major_emergency_light()
@@ -171,15 +170,17 @@
 		light_to_break.break_light_tube()
 
 /// Spawn an evacuation rift for people to go through.
-/datum/sm_delam/proc/effect_evac_rift_start()
-	var/obj/cascade_portal/rift = new /obj/cascade_portal(get_turf(pick(GLOB.generic_event_spawns)))
+/datum/sm_delam/proc/effect_evac_place_rift()
+	return new /obj/cascade_portal(get_turf(pick(GLOB.generic_event_spawns)))
+
+/// Announce the location of the bluespace rift
+/datum/sm_delam/proc/effect_announce_rift_location(area/rift_area)
 	priority_announce("We have been hit by a sector-wide electromagnetic pulse. All of our systems are heavily damaged, including those \
-		required for shuttle navigation. We can only reasonably conclude that a supermatter cascade is occurring on or near your station.\n\n\
-		Evacuation is no longer possible by conventional means; however, we managed to open a rift near the [get_area_name(rift)]. \
-		All personnel are hereby required to enter the rift by any means available.\n\n\
-		[Gibberish("Retrieval of survivors will be conducted upon recovery of necessary facilities.", FALSE, 5)] \
-		[Gibberish("Good luck--", FALSE, 25)]")
-	return rift
+	required for shuttle navigation. We can only reasonably conclude that a supermatter cascade is occurring on or near your station.\n\n\
+	Evacuation is no longer possible by conventional means; however, we managed to open a rift near the <b>[get_area_name(rift_area)]</b>. \
+	All personnel are hereby required to enter the rift by any means available.\n\n\
+	[Gibberish("Retrieval of survivors will be conducted upon recovery of necessary facilities.", FALSE, 5)] \
+	[Gibberish("Good luck--", FALSE, 25)]", encode_text = FALSE)
 
 /// Announce the destruction of the rift and end the round.
 /datum/sm_delam/proc/effect_evac_rift_end()
@@ -187,10 +188,10 @@
 
 	sleep(25 SECONDS)
 
-	priority_announce("Reports indicate formation of crystalline seeds following resonance shift event. \
-		Rapid expansion of crystal mass proportional to rising gravitational force. \
-		Matter collapse due to gravitational pull foreseeable.",
-		"Nanotrasen Star Observation Association")
+	priority_announce("Scans indicate the formation of crystalline seeds following the resonance shift event. \
+		The rapid expansion of crystal mass is proportional to the rising gravitational force. \
+		A matter collapse and a formation of a celestial body is likely.",
+		"Nanotrasen Cosmology Division")
 
 	sleep(25 SECONDS)
 
@@ -198,6 +199,7 @@
 		To the remaining survivors of [station_name()], farewell.", FALSE, 5)]")
 
 	if(SSshuttle.emergency.mode == SHUTTLE_ESCAPE)
+		sleep(1 SECONDS)
 		// special message for hijacks
 		var/shuttle_msg = "Navigation protocol set to [SSshuttle.emergency.is_hijacked() ? "\[ERROR\]" : "backup route"]. \
 			Reorienting bluespace vessel to exit vector. ETA 15 seconds."

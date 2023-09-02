@@ -141,7 +141,7 @@ SUBSYSTEM_DEF(shuttle)
 	/// Are we currently in the process of loading a shuttle? Useful to ensure we don't load more than one at once, to avoid weird inconsistencies and possible runtimes.
 	var/shuttle_loading
 	/// Did the supermatter start a cascade event?
-	var/supermatter_cascade = FALSE
+	var/no_auto_evac = FALSE
 
 /datum/controller/subsystem/shuttle/Initialize()
 	order_number = rand(1, 9000)
@@ -433,7 +433,7 @@ SUBSYSTEM_DEF(shuttle)
 	return 1
 
 /datum/controller/subsystem/shuttle/proc/autoEvac()
-	if (!SSticker.IsRoundInProgress() || supermatter_cascade)
+	if (!SSticker.IsRoundInProgress() || no_auto_evac)
 		return
 
 	var/callShuttle = TRUE

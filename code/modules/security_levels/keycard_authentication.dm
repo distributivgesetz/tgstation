@@ -160,13 +160,14 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/keycard_auth, 26)
 			toggle_bluespace_artillery()
 
 GLOBAL_VAR_INIT(emergency_access, FALSE)
-/proc/make_maint_all_access()
+/proc/make_maint_all_access(announce = TRUE)
 	for(var/area/station/maintenance/A in GLOB.areas)
 		for(var/turf/in_area as anything in A.get_contained_turfs())
 			for(var/obj/machinery/door/airlock/D in in_area)
 				D.emergency = TRUE
 				D.update_icon(ALL, 0)
-	minor_announce("Access restrictions on maintenance and external airlocks have been lifted.", "Attention! Station-wide emergency declared!",1)
+	if(announce)
+		minor_announce("Access restrictions on maintenance and external airlocks have been lifted.", "Attention! Station-wide emergency declared!", TRUE)
 	GLOB.emergency_access = TRUE
 	SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("emergency maintenance access", "enabled"))
 

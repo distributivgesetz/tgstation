@@ -33,7 +33,7 @@
 #define WIZARD_KILLED 19
 /// The station was destroyed by it's own self-destruct nuclear device
 #define STATION_NUKED 20
-/// The station was destroyed by the supermatter cascade
+/// The station was destroyed by a supermatter cascade
 #define SUPERMATTER_CASCADE 21
 /// The emergency shuttle was successfully hijacked
 #define SHUTTLE_HIJACK 24

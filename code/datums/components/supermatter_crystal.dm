@@ -6,7 +6,18 @@
 	var/datum/callback/consume_callback
 
 /datum/component/supermatter_crystal/Initialize(datum/callback/tool_act_callback, datum/callback/consume_callback)
+	// wouldn't make sense on anything else
+	if(!isatom(parent))
+		return COMPONENT_INCOMPATIBLE
+	src.tool_act_callback = tool_act_callback
+	src.consume_callback = consume_callback
 
+/datum/component/supermatter_crystal/Destroy(force, silent)
+	tool_act_callback = null
+	consume_callback = null
+	return ..()
+
+/datum/component/supermatter_crystal/RegisterWithParent()
 	RegisterSignal(parent, COMSIG_ATOM_BLOB_ACT, PROC_REF(blob_hit))
 	RegisterSignal(parent, COMSIG_ATOM_ATTACK_PAW, PROC_REF(paw_hit))
 	RegisterSignal(parent, COMSIG_ATOM_ATTACK_ANIMAL, PROC_REF(animal_hit))
@@ -17,14 +28,7 @@
 	RegisterSignal(parent, COMSIG_ATOM_TOOL_ACT(TOOL_WRENCH), PROC_REF(tool_hit))
 	RegisterSignal(parent, COMSIG_ATOM_BUMPED, PROC_REF(bumped_hit))
 	RegisterSignal(parent, COMSIG_ATOM_INTERCEPT_Z_FALL, PROC_REF(intercept_z_fall))
-
-	src.tool_act_callback = tool_act_callback
-	src.consume_callback = consume_callback
-
-/datum/component/supermatter_crystal/Destroy(force, silent)
-	tool_act_callback = null
-	consume_callback = null
-	return ..()
+	RegisterSignal(parent, COMSIG_ATOM_ENTERING, PROC_REF(on_entering))
 
 /datum/component/supermatter_crystal/UnregisterFromParent(force, silent)
 	var/list/signals_to_remove = list(
@@ -42,23 +46,22 @@
 
 	UnregisterSignal(parent, signals_to_remove)
 
-/datum/component/supermatter_crystal/proc/blob_hit(datum/source, obj/structure/blob/blob)
+/datum/component/supermatter_crystal/proc/blob_hit(atom/source, obj/structure/blob/blob)
 	SIGNAL_HANDLER
-	var/atom/atom_source = source
-	if(!blob || isspaceturf(atom_source)) //does nothing in space
+	if(!blob || isspaceturf(source)) //does nothing in space
 		return
-	playsound(get_turf(atom_source), 'sound/effects/supermatter.ogg', 50, TRUE)
+	playsound(get_turf(source), 'sound/effects/supermatter.ogg', 50, TRUE)
 	consume_returns(damage_increase = blob.get_integrity() * 0.05)
 	if(blob.get_integrity() > 100)
-		blob.visible_message(span_danger("\The [blob] strikes at \the [atom_source] and flinches away!"),
+		blob.visible_message(span_danger("\The [blob] strikes at \the [source] and flinches away!"),
 			span_hear("You hear a loud crack as you are washed with a wave of heat."))
 		blob.take_damage(100, BURN)
 	else
-		blob.visible_message(span_danger("\The [blob] strikes at \the [atom_source] and rapidly flashes to ash."),
+		blob.visible_message(span_danger("\The [blob] strikes at \the [source] and rapidly flashes to ash."),
 			span_hear("You hear a loud crack as you are washed with a wave of heat."))
-		consume(atom_source, blob)
+		consume(source, blob)
 
-/datum/component/supermatter_crystal/proc/paw_hit(datum/source, mob/user, list/modifiers)
+/datum/component/supermatter_crystal/proc/paw_hit(atom/source, mob/user, list/modifiers)
 	SIGNAL_HANDLER
 	if(isalien(user))
 		dust_mob(source, user, cause = "alien attack")
@@ -214,6 +217,14 @@
 
 	playsound(get_turf(atom_source), 'sound/effects/supermatter.ogg', 50, TRUE)
 	consume(atom_source, hit_object)
+
+/datum/component/supermatter_crystal/proc/on_entering(atom/source, atom/movable/arrived, atom/old_loc, list/atom/old_locs)
+	SIGNAL_HANDLER
+	// immediate turf check here because we only check for entering if our atom was moved
+	var/turf/new_turf_loc = source.loc
+	if(!istype(new_turf_loc))
+		return
+	for(var/atom/movable/hit_obj in get_turf(arrived))
 
 /datum/component/supermatter_crystal/proc/intercept_z_fall(datum/source, list/falling_movables, levels)
 	SIGNAL_HANDLER

@@ -28,7 +28,7 @@
 		"Something feels very off.",
 		"A drowning sense of dread washes over you.",
 	)
-	for(var/mob/victim as anything in GLOB.player_list)
+	for(var/mob/living/victim as anything in GLOB.alive_player_list)
 		to_chat(victim, span_danger(pick(messages)))
 
 	return TRUE
@@ -54,20 +54,22 @@
 /datum/sm_delam/cascade/delaminate(obj/machinery/power/supermatter_crystal/sm)
 	message_admins("Supermatter [sm] at [ADMIN_VERBOSEJMP(sm)] triggered a cascade delam.")
 	sm.investigate_log("triggered a cascade delam.", INVESTIGATE_ENGINE)
-
 	effect_explosion(sm)
 	effect_emergency_state()
 	effect_cascade_demoralize()
 	priority_announce("A Type-C resonance shift event has occurred in your sector. Scans indicate local oscillation flux affecting spatial and gravitational substructure. \
-		Multiple resonance hotspots have formed. Please standby.", "Nanotrasen Star Observation Association", ANNOUNCER_SPANOMALIES)
-	sleep(2 SECONDS)
-	effect_strand_shuttle()
-	sleep(5 SECONDS)
-	var/obj/cascade_portal/rift = effect_evac_rift_start()
+		Multiple resonance hotspots have formed. Please standby.", "Nanotrasen Cosmology Division", ANNOUNCER_SPANOMALIES)
+	var/obj/cascade_portal/rift = effect_evac_place_rift()
+	effect_crystal_mass(sm, rift)
 	RegisterSignal(rift, COMSIG_QDELETING, PROC_REF(end_round_holder))
+	var/area/rift_area = get_area(rift)
+	rift = null // don't hold a hard reference
+	sleep(5 SECONDS)
+	effect_strand_shuttle()
+	sleep(7 SECONDS)
+	effect_announce_rift_location(rift_area)
 	SSsupermatter_cascade.can_fire = TRUE
 	SSsupermatter_cascade.cascade_initiated = TRUE
-	effect_crystal_mass(sm, rift)
 	return ..()
 
 /datum/sm_delam/cascade/examine(obj/machinery/power/supermatter_crystal/sm)
@@ -90,7 +92,7 @@
 		return FALSE
 	priority_announce("Attention: Long range anomaly scans indicate abnormal quantities of harmonic flux originating from \
 	a subject within [station_name()], a resonance collapse may occur.",
-	"Nanotrasen Star Observation Association")
+	"Nanotrasen Cosmology Division")
 	return TRUE
 
 /// Signal calls cant sleep, we gotta do this.

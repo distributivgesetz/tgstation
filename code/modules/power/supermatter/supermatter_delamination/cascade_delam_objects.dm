@@ -9,9 +9,11 @@
 	density = TRUE
 	anchored = TRUE
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF | FREEZE_PROOF
+	/* Commented out because this causes a lot of lag
 	light_power = 1
 	light_range = 5
 	light_color = COLOR_VIVID_YELLOW
+	*/
 	move_resist = INFINITY
 	///All dirs we can expand to
 	var/list/available_dirs = list(NORTH,SOUTH,EAST,WEST,UP,DOWN)
@@ -37,11 +39,11 @@
 		our_turf.opacity = FALSE
 
 /obj/crystal_mass/process()
-
 	if(!COOLDOWN_FINISHED(src, sm_wall_cooldown))
 		return
 
 	if(!available_dirs || available_dirs.len <= 0)
+		available_dirs = null
 		return PROCESS_KILL
 
 	COOLDOWN_START(src, sm_wall_cooldown, rand(0, 3 SECONDS))
@@ -49,11 +51,10 @@
 	var/picked_dir = pick_n_take(available_dirs)
 	var/turf/next_turf = get_step_multiz(src, picked_dir)
 
-	icon_state = "crystal_cascade_[rand(1,6)]"
-
 	if(!next_turf || locate(/obj/crystal_mass) in next_turf)
 		return
 
+	// despite how unholy and ugly this is, it's a good performance optimization
 	for(var/atom/movable/checked_atom as anything in next_turf)
 		if(isliving(checked_atom))
 			sm_comp.dust_mob(src, checked_atom, span_danger("\The [src] lunges out on [checked_atom], touching [checked_atom.p_them()]... \
@@ -65,7 +66,6 @@
 			playsound(get_turf(checked_atom), 'sound/effects/supermatter.ogg', 50, TRUE)
 			qdel(checked_atom)
 		else if(isitem(checked_atom))
-			playsound(get_turf(checked_atom), 'sound/effects/supermatter.ogg', 50, TRUE)
 			qdel(checked_atom)
 
 	new /obj/crystal_mass(next_turf, get_dir(next_turf, src))
@@ -113,6 +113,7 @@
 
 /obj/cascade_portal/Initialize(mapload)
 	. = ..()
+	playsound(get_turf(src), 'sound/magic/charge.ogg', 50, TRUE)
 	var/turf/location = get_turf(src)
 	var/area_name = get_area_name(src)
 	message_admins("Exit rift created at [area_name]. [ADMIN_VERBOSEJMP(location)]")
@@ -129,8 +130,7 @@
 
 /obj/cascade_portal/Bumped(atom/movable/hit_object)
 	consume(hit_object)
-	new /obj/effect/particle_effect/sparks(loc)
-	playsound(loc, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+	do_sparks(5, FALSE, src)
 
 /**
  * Proc to consume the objects colliding with the portal
@@ -152,18 +152,15 @@
 		while(!is_safe_turf(arrival_turf))
 
 		var/mob/living/consumed_mob = consumed_object
-		message_admins("[key_name_admin(consumed_mob)] has entered [src] [ADMIN_VERBOSEJMP(src)].")
 		investigate_log("was entered by [key_name(consumed_mob)].", INVESTIGATE_ENGINE)
 		consumed_mob.forceMove(arrival_turf)
 		consumed_mob.Paralyze(100)
 		consumed_mob.adjustBruteLoss(30)
 		consumed_mob.flash_act(1, TRUE, TRUE)
 
-		new /obj/effect/particle_effect/sparks(consumed_object)
+		do_sparks(5, FALSE, consumed_mob)
 		playsound(consumed_object, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 	else if(isitem(consumed_object))
 		consumed_object.visible_message(span_danger("\The [consumed_object] smacks into \the [src] and disappears out of sight."), null,
 			span_hear("You hear a loud crack as a small distortion passes through you."))
-
 		qdel(consumed_object)
-
