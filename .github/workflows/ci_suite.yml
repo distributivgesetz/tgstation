@@ -51,7 +51,6 @@ jobs:
           bash tools/ci/install_spaceman_dmm.sh dreamchecker
           cargo install ripgrep --features pcre2
           tools/bootstrap/python -c ''
-          exit 1
       - name: Give Linters A Go
         id: linter-setup
         run: ':'
@@ -69,7 +68,9 @@ jobs:
         run: tools/bootstrap/python -m define_sanity.check
       - name: Run DreamChecker
         if: steps.linter-setup.conclusion == 'success' && !cancelled()
-        run: ~/dreamchecker 2>&1 | bash tools/ci/annotate_dm.sh
+        run: |
+          ~/dreamchecker 2>&1 | bash tools/ci/annotate_dm.sh
+          exit 1
       - name: Run Map Checks
         if: steps.linter-setup.conclusion == 'success' && !cancelled()
         run: |
