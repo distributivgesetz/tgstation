@@ -51,6 +51,7 @@ jobs:
           bash tools/ci/install_spaceman_dmm.sh dreamchecker
           cargo install ripgrep --features pcre2
           tools/bootstrap/python -c ''
+          exit 1
       - name: Give Linters A Go
         id: linter-setup
         run: ':'
