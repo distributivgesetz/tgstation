@@ -29,7 +29,7 @@
 		if(V.voice_change && wear_id)
 			var/obj/item/card/id/idcard = wear_id.GetID()
 			if(istype(idcard))
-				return idcard.registered_name
+				return isnull(idcard.registered_name) ? "Unknown" : idcard.registered_name
 			else
 				return real_name
 		else
