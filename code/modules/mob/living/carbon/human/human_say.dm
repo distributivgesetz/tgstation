@@ -28,10 +28,9 @@
 		var/obj/item/clothing/mask/chameleon/V = wear_mask
 		if(V.voice_change && wear_id)
 			var/obj/item/card/id/idcard = wear_id.GetID()
-			if(istype(idcard))
-				return isnull(idcard.registered_name) ? "Unknown" : idcard.registered_name
-			else
-				return real_name
+			if(istype(idcard) && !isnull(idcard.registered_name))
+				return idcard.registered_name
+			return "Unknown"
 		else
 			return real_name
 
