@@ -88,7 +88,7 @@
 	if(!B)
 		M.apply_status_effect(/datum/status_effect/stacking/saw_bleed/bloodletting, bleed_stacks_per_hit)
 	else
-		B.add_stacks(bleed_stacks_per_hit)
+		B.adjust_stacks(bleed_stacks_per_hit)
 
 /obj/item/knife/butcher
 	name = "butcher's cleaver"

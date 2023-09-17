@@ -33,6 +33,21 @@
 /datum/status_effect/New(list/arguments)
 	on_creation(arglist(arguments))
 
+/datum/status_effect/Destroy()
+	switch(processing_speed)
+		if(STATUS_EFFECT_FAST_PROCESS)
+			STOP_PROCESSING(SSfastprocess, src)
+		if(STATUS_EFFECT_NORMAL_PROCESS)
+			STOP_PROCESSING(SSprocessing, src)
+	if(owner)
+		linked_alert = null
+		owner.clear_alert(id)
+		LAZYREMOVE(owner.status_effects, src)
+		on_remove()
+		UnregisterSignal(owner, COMSIG_LIVING_POST_FULLY_HEAL)
+		owner = null
+	return ..()
+
 /// Called from New() with any supplied status effect arguments.
 /// Not guaranteed to exist by the end.
 /// Returning FALSE from on_apply will stop on_creation and self-delete the effect.
@@ -41,7 +56,7 @@
 		owner = new_owner
 	if(QDELETED(owner) || !on_apply())
 		qdel(src)
-		return
+		return FALSE
 	if(owner)
 		LAZYADD(owner.status_effects, src)
 		RegisterSignal(owner, COMSIG_LIVING_POST_FULLY_HEAL, PROC_REF(remove_effect_on_heal))
@@ -64,21 +79,6 @@
 				START_PROCESSING(SSprocessing, src)
 
 	return TRUE
-
-/datum/status_effect/Destroy()
-	switch(processing_speed)
-		if(STATUS_EFFECT_FAST_PROCESS)
-			STOP_PROCESSING(SSfastprocess, src)
-		if(STATUS_EFFECT_NORMAL_PROCESS)
-			STOP_PROCESSING(SSprocessing, src)
-	if(owner)
-		linked_alert = null
-		owner.clear_alert(id)
-		LAZYREMOVE(owner.status_effects, src)
-		on_remove()
-		UnregisterSignal(owner, COMSIG_LIVING_POST_FULLY_HEAL)
-		owner = null
-	return ..()
 
 // Status effect process. Handles adjusting its duration and ticks.
 // If you're adding processed effects, put them in [proc/tick]
@@ -132,10 +132,7 @@
 /// or when a status effect with on_remove_on_mob_delete
 /// set to FALSE has its mob deleted
 /datum/status_effect/proc/be_replaced()
-	linked_alert = null
-	owner.clear_alert(id)
-	LAZYREMOVE(owner.status_effects, src)
-	owner = null
+	SHOULD_CALL_PARENT(TRUE)
 	qdel(src)
 
 /// Called before being fully removed (before on_remove)

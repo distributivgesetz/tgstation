@@ -1525,14 +1525,14 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 	if(fire_stacks <= 0)
 		return FALSE
 
-	var/datum/status_effect/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks)
+	var/datum/status_effect/stacking/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
 	if(!fire_status || fire_status.on_fire)
 		return FALSE
 
 	return fire_status.ignite(silent)
 
 /mob/living/proc/update_fire()
-	var/datum/status_effect/fire_handler/fire_handler = has_status_effect(/datum/status_effect/fire_handler)
+	var/datum/status_effect/stacking/fire_handler/fire_handler = has_status_effect(/datum/status_effect/stacking/fire_handler)
 	if(fire_handler)
 		fire_handler.update_overlay()
 
@@ -1543,11 +1543,11 @@ GLOBAL_LIST_EMPTY(fire_appearances)
  * Signals the extinguishing.
  */
 /mob/living/proc/extinguish_mob()
-	var/datum/status_effect/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks)
+	var/datum/status_effect/stacking/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
 	if(!fire_status || !fire_status.on_fire)
 		return
 
-	remove_status_effect(/datum/status_effect/fire_handler/fire_stacks)
+	remove_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
 
 /**
  * Adjust the amount of fire stacks on a mob
@@ -1556,15 +1556,15 @@ GLOBAL_LIST_EMPTY(fire_appearances)
  *
  * Vars:
  * * stacks: int The amount to modify the fire stacks
- * * fire_type: type Type of fire status effect that we apply, should be subtype of /datum/status_effect/fire_handler/fire_stacks
+ * * fire_type: type Type of fire status effect that we apply, should be subtype of /datum/status_effect/stacking/fire_handler/fire_stacks
  */
 
-/mob/living/proc/adjust_fire_stacks(stacks, fire_type = /datum/status_effect/fire_handler/fire_stacks)
+/mob/living/proc/adjust_fire_stacks(stacks, fire_type = /datum/status_effect/stacking/fire_handler/fire_stacks)
 	if(stacks < 0)
 		stacks = max(-fire_stacks, stacks)
 	apply_status_effect(fire_type, stacks)
 
-/mob/living/proc/adjust_wet_stacks(stacks, wet_type = /datum/status_effect/fire_handler/wet_stacks)
+/mob/living/proc/adjust_wet_stacks(stacks, wet_type = /datum/status_effect/stacking/fire_handler/wet_stacks)
 	if(stacks < 0)
 		stacks = max(fire_stacks, stacks)
 	apply_status_effect(wet_type, stacks)
@@ -1577,16 +1577,16 @@ GLOBAL_LIST_EMPTY(fire_appearances)
  *
  * Vars:
  * * stacks: int The amount to set fire_stacks to
- * * fire_type: type Type of fire status effect that we apply, should be subtype of /datum/status_effect/fire_handler/fire_stacks
+ * * fire_type: type Type of fire status effect that we apply, should be subtype of /datum/status_effect/stacking/fire_handler/fire_stacks
  * * remove_wet_stacks: bool If we remove all wet stacks upon doing this
  */
 
-/mob/living/proc/set_fire_stacks(stacks, fire_type = /datum/status_effect/fire_handler/fire_stacks, remove_wet_stacks = TRUE)
+/mob/living/proc/set_fire_stacks(stacks, fire_type = /datum/status_effect/stacking/fire_handler/fire_stacks, remove_wet_stacks = TRUE)
 	if(stacks < 0) //Shouldn't happen, ever
 		CRASH("set_fire_stacks recieved negative [stacks] fire stacks")
 
 	if(remove_wet_stacks)
-		remove_status_effect(/datum/status_effect/fire_handler/wet_stacks)
+		remove_status_effect(/datum/status_effect/stacking/fire_handler/wet_stacks)
 
 	if(stacks == 0)
 		remove_status_effect(fire_type)
@@ -1594,12 +1594,12 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 
 	apply_status_effect(fire_type, stacks, TRUE)
 
-/mob/living/proc/set_wet_stacks(stacks, wet_type = /datum/status_effect/fire_handler/wet_stacks, remove_fire_stacks = TRUE)
+/mob/living/proc/set_wet_stacks(stacks, wet_type = /datum/status_effect/stacking/fire_handler/wet_stacks, remove_fire_stacks = TRUE)
 	if(stacks < 0)
 		CRASH("set_wet_stacks recieved negative [stacks] wet stacks")
 
 	if(remove_fire_stacks)
-		remove_status_effect(/datum/status_effect/fire_handler/fire_stacks)
+		remove_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
 
 	if(stacks == 0)
 		remove_status_effect(wet_type)
@@ -1617,8 +1617,8 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 	if(HAS_TRAIT(spread_to, TRAIT_NOFIRE_SPREAD) || HAS_TRAIT(src, TRAIT_NOFIRE_SPREAD))
 		return
 
-	var/datum/status_effect/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks)
-	var/datum/status_effect/fire_handler/fire_stacks/their_fire_status = spread_to.has_status_effect(/datum/status_effect/fire_handler/fire_stacks)
+	var/datum/status_effect/stacking/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
+	var/datum/status_effect/stacking/fire_handler/fire_stacks/their_fire_status = spread_to.has_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks)
 	if(fire_status && fire_status.on_fire)
 		if(their_fire_status && their_fire_status.on_fire)
 			var/firesplit = (fire_stacks + spread_to.fire_stacks) / 2
@@ -1664,7 +1664,7 @@ GLOBAL_LIST_EMPTY(fire_appearances)
  * * fire_handler: Current fire status effect that called the proc
  */
 
-/mob/living/proc/on_fire_stack(seconds_per_tick, datum/status_effect/fire_handler/fire_stacks/fire_handler)
+/mob/living/proc/on_fire_stack(seconds_per_tick, datum/status_effect/stacking/fire_handler/fire_stacks/fire_handler)
 	return
 
 //Mobs on Fire end

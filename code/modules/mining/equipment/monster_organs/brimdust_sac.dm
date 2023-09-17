@@ -108,9 +108,9 @@
 
 /datum/status_effect/stacking/brimdust_coating/refresh(effect, stacks_to_add)
 	. = ..()
-	add_stacks(stacks_to_add)
+	adjust_stacks(stacks_to_add)
 
-/datum/status_effect/stacking/brimdust_coating/add_stacks(stacks_added)
+/datum/status_effect/stacking/brimdust_coating/adjust_stacks(stacks_added)
 	. = ..()
 	if (stacks == 0)
 		return
@@ -133,6 +133,12 @@
 	. = ..()
 	owner.cut_overlay(dust_overlay)
 	UnregisterSignal(owner, list(COMSIG_MOB_APPLY_DAMAGE, COMSIG_COMPONENT_CLEAN_ACT))
+
+/datum/status_effect/stacking/brimdust_coating/can_have_status()
+	return owner.stat != DEAD
+
+/datum/status_effect/stacking/brimdust_coating/can_gain_stacks()
+	return owner.stat != DEAD
 
 /// When you are cleaned, wash off the buff
 /datum/status_effect/stacking/brimdust_coating/proc/on_cleaned()
@@ -172,7 +178,7 @@
 		target.apply_damage(damage_dealt, damagetype = BURN, blocked = armor, spread_damage = TRUE)
 
 	SEND_SIGNAL(owner, COMSIG_BRIMDUST_EXPLOSION)
-	add_stacks(-1)
+	adjust_stacks(-1)
 
 /// Slowdown applied when you are detonated on the space station
 /datum/status_effect/brimdust_concussion

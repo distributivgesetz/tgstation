@@ -1081,7 +1081,7 @@
 	if(!status)
 		target.apply_status_effect(/datum/status_effect/stacking/saw_bleed/bloodletting, 6)
 	else
-		status.add_stacks(6)
+		status.adjust_stacks(6)
 
 /obj/item/cursed_katana/proc/dash(mob/living/target, mob/user)
 	user.visible_message(span_warning("[user] dashes through [target]!"),

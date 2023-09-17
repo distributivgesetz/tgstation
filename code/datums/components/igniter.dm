@@ -2,7 +2,7 @@
 	var/fire_stacks
 	var/fire_type
 
-/datum/component/igniter/Initialize(fire_stacks = 1, fire_type = /datum/status_effect/fire_handler/fire_stacks)
+/datum/component/igniter/Initialize(fire_stacks = 1, fire_type = /datum/status_effect/stacking/fire_handler/fire_stacks)
 	if(!isitem(parent) && !ishostile(parent) && !isgun(parent) && !ismachinery(parent) && !isstructure(parent) && !isprojectilespell(parent))
 		return COMPONENT_INCOMPATIBLE
 

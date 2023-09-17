@@ -213,9 +213,9 @@
 				msg += "<b>[t_He] [t_has] severe [damage_desc[CLONE]]!</b>\n"
 
 
-	if(has_status_effect(/datum/status_effect/fire_handler/fire_stacks))
+	if(has_status_effect(/datum/status_effect/stacking/fire_handler/fire_stacks))
 		msg += "[t_He] [t_is] covered in something flammable.\n"
-	if(has_status_effect(/datum/status_effect/fire_handler/wet_stacks))
+	if(has_status_effect(/datum/status_effect/stacking/fire_handler/wet_stacks))
 		msg += "[t_He] look[p_s()] a little soaked.\n"
 
 

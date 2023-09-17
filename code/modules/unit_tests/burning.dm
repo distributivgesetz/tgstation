@@ -9,7 +9,7 @@
 	dummy.ignite_mob()
 	TEST_ASSERT(dummy.on_fire, "Dummy is not on fire despite having 20 fire stacks and being ignited.")
 	// Manually tick it a few times
-	var/datum/status_effect/fire_handler/fire_stacks/handler = locate() in dummy.status_effects
+	var/datum/status_effect/stacking/fire_handler/fire_stacks/handler = locate() in dummy.status_effects
 	for(var/i in 1 to 5)
 		handler.tick_interval = world.time - 1
 		handler.process()

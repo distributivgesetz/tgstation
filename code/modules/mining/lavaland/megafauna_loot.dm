@@ -929,7 +929,7 @@
 		return
 	var/datum/status_effect/stacking/saw_bleed/existing_bleed = target.has_status_effect(/datum/status_effect/stacking/saw_bleed)
 	if(existing_bleed)
-		existing_bleed.add_stacks(bleed_stacks_per_hit)
+		existing_bleed.adjust_stacks(bleed_stacks_per_hit)
 	else
 		target.apply_status_effect(/datum/status_effect/stacking/saw_bleed, bleed_stacks_per_hit)
 
