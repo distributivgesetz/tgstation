@@ -6,7 +6,7 @@ files:
   - !files code_files
   - code/**/!(__byond_version_compat).dm
 
-checks:
+sections:
   map_issues:
     section: Map Issues
     checks:
@@ -119,7 +119,8 @@ checks:
         files:
           - !files unit_test_files
         message: >
-          Usage of mob/living/carbon/human detected in a unit test, please use mob/living/carbon/human/consistent instead
+          Usage of mob/living/carbon/human detected in a unit test,
+          please use mob/living/carbon/human/consistent instead
 
   code_quality_issues:
     section: Code Quality Issues
@@ -188,20 +189,21 @@ checks:
         files:
           - !files code_files
         message: >
-          update_icon_updates_onmob element automatically updates ITEM_SLOT_HANDS, this is redundant and should be removed
+          update_icon_updates_onmob element automatically updates ITEM_SLOT_HANDS,
+          this is redundant and should be removed
 
       to_chat_sanity:
         greps: to_chat\((?!.*,).*\)
         files:
           - !files code_files
-        message:
+        message: >
           to_chat() call is missing a recipient, please add one
 
       timer_flag_sanity:
         greps: addtimer\((?=.*TIMER_OVERRIDE)(?!.*TIMER_UNIQUE).*\)'
         files:
           - !files code_files
-        message:
+        message: >
           TIMER_OVERRIDE used without TIMER_UNIQUE, please add TIMER_UNIQUE or remove TIMER_OVERRIDE
 
       datum_stockpart_sanity:

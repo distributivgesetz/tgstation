@@ -11,3 +11,4 @@ mysql-connector-python==8.0.33
 
 # codecheck
 ripgrepy==2.0.0
+toposort==1.10
