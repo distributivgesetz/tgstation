@@ -1,0 +1,17 @@
+name: 'PR Text Emoji Stripper'
+description: 'Removes emoji characters from Pull Request content.'
+inputs:
+  repo-token:
+    description: 'The GITHUB_TOKEN secret'
+    required: true
+  title:
+    description: 'Set true to enable for the title field'
+  body:
+    description: 'Set true to enable for the body field'
+  body-after:
+    description: 'If provided will only apply to emoji found after this'
+  body-before:
+    ddescription: 'If provided will only apply to emoji found before this'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
