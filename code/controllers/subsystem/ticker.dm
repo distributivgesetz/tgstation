@@ -214,12 +214,27 @@ SUBSYSTEM_DEF(ticker)
 				check_maprotate()
 				Master.SetRunLevel(RUNLEVEL_POSTGAME)
 
+/datum/controller/subsystem/ticker/proc/instantiate_gamemode()
+	var/gamemode_type = CONFIG_GET(string/gamemode)
+	switch(gamemode_type)
+		if(GAMEMODE_DYNAMIC)
+			return new /datum/game_mode/dynamic
+		if(GAMEMODE_DIRECTOR)
+			return new /datum/game_mode/director
+		else
+			return null
+
 
 /datum/controller/subsystem/ticker/proc/setup()
 	to_chat(world, span_boldannounce("Starting game..."))
 	var/init_start = world.timeofday
 
-	mode = new /datum/game_mode/dynamic
+	mode = instantiate_gamemode()
+	if(isnull(mode))
+		log_game("Game failed setup due to invalid game mode config")
+		to_chat(world, "<B>Error creating round game mode due to invalid config.</B> Reverting to pre-game lobby. Please contact server administration.")
+		SSjob.ResetOccupations()
+		return FALSE
 
 	CHECK_TICK
 	//Configure mode and assign player to special mode stuff

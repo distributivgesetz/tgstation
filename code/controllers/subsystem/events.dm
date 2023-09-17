@@ -14,6 +14,10 @@ SUBSYSTEM_DEF(events)
 	var/wizardmode = FALSE
 
 /datum/controller/subsystem/events/Initialize()
+	if(CONFIG_GET(string/gamemode) == GAMEMODE_DIRECTOR)
+		can_fire = FALSE // director takes control over events, so we disable ourselves for the round
+		return SS_INIT_NO_NEED
+
 	for(var/type in typesof(/datum/round_event_control))
 		var/datum/round_event_control/event = new type()
 		if(!event.typepath || !event.valid_for_map())

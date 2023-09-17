@@ -97,6 +97,7 @@ FoxPMcCloud = Game Master
 Xhuis = Game Master
 Astralenigma = Game Master
 Tokiko1 = Game Master
+distrilul = Game Master
 SuperSayu = Game Master
 Lzimann = Game Master
 As334 = Game Master

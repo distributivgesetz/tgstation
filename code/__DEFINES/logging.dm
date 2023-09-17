@@ -89,6 +89,7 @@
 // Misc categories
 #define LOG_CATEGORY_ATTACK "attack"
 #define LOG_CATEGORY_CONFIG "config"
+#define LOG_CATEGORY_DIRECTOR "director"
 #define LOG_CATEGORY_DYNAMIC "dynamic"
 #define LOG_CATEGORY_ECONOMY "economy"
 #define LOG_CATEGORY_FILTER "filter"
@@ -98,9 +99,9 @@
 #define LOG_CATEGORY_QDEL "qdel"
 #define LOG_CATEGORY_RUNTIME "runtime"
 #define LOG_CATEGORY_SHUTTLE "shuttle"
+#define LOG_CATEGORY_SIGNAL "signal"
 #define LOG_CATEGORY_SILICON "silicon"
 #define LOG_CATEGORY_SILO "silo"
-#define LOG_CATEGORY_SIGNAL "signal"
 #define LOG_CATEGORY_SPEECH_INDICATOR "speech-indiciator"
 // Leave the underscore, it's there for backwards compatibility reasons
 #define LOG_CATEGORY_SUSPICIOUS_LOGIN "suspicious_logins"
