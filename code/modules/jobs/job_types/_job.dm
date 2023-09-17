@@ -350,7 +350,6 @@
 		pda.saved_identification = equipped.real_name
 		pda.saved_job = equipped_job.title
 		pda.update_ringtone(equipped_job.job_tone)
-		pda.UpdateDisplay()
 
 		var/client/equipped_client = GLOB.directory[ckey(equipped.mind?.key)]
 
