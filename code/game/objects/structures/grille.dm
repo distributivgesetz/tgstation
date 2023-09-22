@@ -10,7 +10,7 @@
 	density = TRUE
 	anchored = TRUE
 	pass_flags_self = PASSGRILLE
-	flags_1 = CONDUCT_1
+	flags_1 = CONDUCT_1 | PREVENT_CLICK_UNDER_1
 	obj_flags = CAN_BE_HIT | IGNORE_DENSITY
 	pressure_resistance = 5*ONE_ATMOSPHERE
 	armor_type = /datum/armor/structure_grille
