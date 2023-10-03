@@ -2,17 +2,13 @@
 	. = list()
 	for(var/t in subtypesof(/datum/reagent))
 		var/datum/reagent/R = t
-		. += list(list("id" = t, "text" = initial(R.name)))
-
-	. = json_encode(.)
+		. += list(list("path" = t, "name" = initial(R.name)))
 
 /proc/beakersforbeakers()
 	. = list()
 	for(var/t in subtypesof(/obj/item/reagent_containers))
 		var/obj/item/reagent_containers/C = t
-		. += list(list("id" = t, "text" = initial(C.name), "volume" = initial(C.volume)))
-
-	. = json_encode(.)
+		. += list(list("path" = t, "name" = initial(C.name), "volume" = initial(C.volume)))
 
 /datum/admins/proc/beaker_panel_act(list/href_list)
 	switch (href_list["beakerpanel"])
@@ -63,6 +59,103 @@
 /datum/admins/proc/beaker_panel()
 	set category = "Admin.Events"
 	set name = "Spawn reagent container"
+	if(!check_rights())
+		return
+	var/datum/admin_beaker_panel/panel = new
+	panel.ui_interact(usr)
+
+/datum/admin_beaker_panel
+	/// Whether the two static vars below have been initialized yet.
+	var/static/json_initialized = FALSE
+	/// JSON encoded array of all reagents.
+	var/static/reagent_types = null
+	/// JSON encoded array of all reagent containers.
+	var/static/reagent_container_types = null
+
+/datum/admin_beaker_panel/New()
+	..()
+	if(!json_initialized)
+		reagent_types = reagentsforbeakers()
+		reagent_container_types = beakersforbeakers()
+		json_initialized = TRUE
+
+/datum/admin_beaker_panel/proc/create_container(list/containerdata, location)
+	var/containertype = text2path(containerdata["container"])
+	var/obj/item/reagent_containers/container = new containertype(location)
+	var/datum/reagents/reagents = container.reagents
+	for(var/datum/reagent/R in reagents.reagent_list) // clear the container of reagents
+		reagents.remove_reagent(R.type,R.volume)
+	for (var/list/item in containerdata["reagents"])
+		var/datum/reagent/reagenttype = text2path(item["reagent"])
+		var/amount = text2num(item["volume"])
+		if ((reagents.total_volume + amount) > reagents.maximum_volume)
+			reagents.maximum_volume = reagents.total_volume + amount
+		reagents.add_reagent(reagenttype, amount)
+	return container
+
+/datum/admin_beaker_panel/proc/prep_assembly(obj/item/assembly/towrap, grenade)
+	var/obj/item/assembly/igniter/igniter = new
+	igniter.secured = FALSE
+	var/obj/item/assembly_holder/assholder = new(grenade)
+	towrap.forceMove(assholder)
+	igniter.forceMove(assholder)
+	assholder.assemble(igniter, towrap, usr)
+	assholder.master = grenade
+	return assholder
+
+/datum/admin_beaker_panel/ui_interact(mob/user, datum/tgui/ui)
+	ui = SStgui.try_update_ui(user, src, ui)
+	if(!ui)
+		ui = new(user, src, "AdminBeakerPanel")
+		ui.open()
+
+/datum/admin_beaker_panel/ui_static_data(mob/user)
+	var/list/static_data = list()
+	static_data["reagent_types"] = reagent_types
+	static_data["reagent_container_types"] = reagent_container_types
+	return static_data
+
+/datum/admin_beaker_panel/ui_state(mob/user)
+	return GLOB.admin_state
+
+/datum/admin_beaker_panel/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	if(..())
+		return TRUE
+
+	switch(action)
+		if("spawncontainer")
+			var/containerdata = json_decode(params["container"])
+			var/obj/item/reagent_containers/container = create_container(containerdata, get_turf(usr))
+			usr.log_message("spawned a [container] containing [pretty_string_from_reagent_list(container.reagents.reagent_list)]", LOG_GAME)
+
+		if("spawngrenade")
+			var/obj/item/grenade/chem_grenade/grenade = new(get_turf(usr))
+			var/containersdata = json_decode(params["containers"])
+			var/reagent_string
+
+			for (var/i in 1 to 2)
+				grenade.beakers += create_container(containersdata[i], grenade)
+				reagent_string += " ([grenade.beakers[i].name] [i] : " + pretty_string_from_reagent_list(grenade.beakers[i].reagents.reagent_list) + ");"
+
+			grenade.stage_change(GRENADE_READY)
+
+			var/grenadedata = json_decode(params["grenadedata"])
+
+			switch (params["grenadetype"])
+				if ("normal") // Regular cable coil-timed grenade
+					var/det_time = text2num(grenadedata["grenade-timer"])
+					if (det_time)
+						grenade.det_time = det_time
+
+			usr.log_message("spawned a [grenade] containing: [reagent_string]", LOG_GAME)
+
+
+/datum/admin_beaker_panel/ui_close(mob/user)
+	qdel(src)
+
+/datum/admins/proc/beaker_panel_old()
+	set category = "Admin.Events"
+	set name = "Spawn reagent container (OLD)"
 	if(!check_rights())
 		return
 	var/datum/asset/asset_datum = get_asset_datum(/datum/asset/simple/namespaced/common)
@@ -124,9 +217,9 @@
 				<script>
 				window.onload=function(){
 
-					var reagents = [reagentsforbeakers()];
+					var reagents = [json_encode(reagentsforbeakers())];
 
-					var containers = [beakersforbeakers()];
+					var containers = [json_encode(beakersforbeakers())];
 
 					$('select\[name="containertype"\]').select2({
 						data: containers,
@@ -146,7 +239,7 @@
 
 					$('#spawn-grenade').click(function() {
 						var containers = $('div.container-control').map(function() {
-					  	  var type = $(this).children('select\[name=containertype\]').select2("data")\[0\].id;
+					  	  var type = $(this).children('select\[name=containertype\]').select2("data")\[0\].path;
 					      var reagents = $(this).find("li.reagent").map(function() {
 					        return { "reagent": $(this).data("type"), "volume": $(this).find('input').val()};
 					        }).get();
@@ -173,7 +266,7 @@
 
 					$('.spawn-container').click(function() {
 						var container = $(this).parents('div.container-control')\[0\];
-					  var type = $(container).children('select\[name=containertype\]').select2("data")\[0\].id;
+					  var type = $(container).children('select\[name=containertype\]').select2("data")\[0\].path;
 					  var reagents = $(container).find("li.reagent").map(function() {
 					  	return { "reagent": $(this).data("type"), "volume": $(this).find('input').val()};
 					    }).get();
@@ -192,7 +285,7 @@
 					$('.add-reagent').click(function() {
 						var select = $(this).parents('li').children('select').select2("data")\[0\];
 					  var amount = $(this).parent().children('input').val();
-					  addReagent($(this).parents('ul'), select.id, select.text, amount)
+					  addReagent($(this).parents('ul'), select.path, select.name, amount)
 					})
 
 					$('.export-reagents').click(function() {
@@ -214,8 +307,8 @@
 
 					  $(parts).each(function() {
 					  	var reagentArr = this.split('=');
-					    var thisReagent = $(reagents).filter(function() { return this.text.toLowerCase().replace(/\\W/g, '') == reagentArr\[0\] })\[0\];
-					    addReagent(ul, thisReagent.id, thisReagent.text, reagentArr\[1\]);
+					    var thisReagent = $(reagents).filter(function() { return this.name.toLowerCase().replace(/\\W/g, '') == reagentArr\[0\] })\[0\];
+					    addReagent(ul, thisReagent.path, thisReagent.name, reagentArr\[1\]);
 					  });
 
 					});
@@ -233,7 +326,7 @@
 
 					function textSelection(selection)
 					{
-					return selection.text;
+					return selection.name;
 					}
 
 					function noEscape(markup)
@@ -243,12 +336,12 @@
 
 					function formatReagent(result)
 					{
-					return '<span>'+result.text+'</span><br/><span><small>'+result.id+'</small></span>';
+					return '<span>'+result.name+'</span><br/><span><small>'+result.path+'</small></span>';
 					}
 
 					function formatContainer(result)
 					{
-					return '<span>'+result.text+" ("+result.volume+'u)</span><br/><span><small>'+result.id+'</small></span>';
+					return '<span>'+result.name+" ("+result.volume+'u)</span><br/><span><small>'+result.path+'</small></span>';
 					}
 
 
