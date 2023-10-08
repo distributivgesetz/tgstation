@@ -1,10 +1,8 @@
-from typing import Any
-
 class ValidationError(ValueError):
     pass
 
-class CVOption():
-    def __init__(self, key: str, value: Any) -> None:
+class CVOption:
+    def __init__(self, key: str, value) -> None:
         self.key = key
         self.value = value
 
@@ -14,23 +12,20 @@ class CVOption():
     def __repr__(self) -> str:
         return self.__str__()
 
-class CVGrep():
-    def __init__(self, key: str, grep: str, options: list[CVOption] = []) -> None:
-        self.key = key
+class CVGrep:
+    def __init__(self, grep: str, options: list[CVOption]) -> None:
         self.grep = grep
         self.options = options
 
     def __str__(self) -> str:
-        return f'CVGrep(key={self.key}, grep={self.grep}, options={self.options})'
+        return f'CVGrep(grep={self.grep}, options={self.options})'
 
     def __repr__(self) -> str:
         return self.__str__()
 
-class CVGrepPipe():
+class CVGrepPipe:
     def __init__(self, greps: list[CVGrep]) -> None:
         self.greps = greps
-
-    def
 
     def __str__(self) -> str:
         return f'CVGrepPipe(greps={self.greps})'
@@ -38,8 +33,8 @@ class CVGrepPipe():
     def __repr__(self) -> str:
         return self.__str__()
 
-class CVCheck():
-    def __init__(self, key: str, files: list[str], greps: list[CVGrep] = []) -> None:
+class CVCheck:
+    def __init__(self, key: str, files: list[str], greps: list[CVGrep]) -> None:
         self.key = key
         self.files = files
         self.greps = greps
@@ -50,14 +45,13 @@ class CVCheck():
     def __repr__(self) -> str:
         return self.__str__()
 
-class CVSection():
-    def __init__(self, key: str, name: str, checks: list[CVCheck] = []) -> None:
-        self.key = key
+class CVSection:
+    def __init__(self, name: str, checks: list[CVCheck] = []) -> None:
         self.name = name
         self.checks = checks
 
     def __str__(self) -> str:
-        return f'CVSection(key={self.key}, name={self.name}, checks={self.checks})'
+        return f'CVSection(name={self.name}, checks={self.checks})'
 
     def __repr__(self) -> str:
         return self.__str__()

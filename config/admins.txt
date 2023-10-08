@@ -34,6 +34,7 @@ nodrak = Game Master
 carnwennan = Game Master
 ikarrus = Game Master
 cheridan = Game Master
+distrilul = Game Master
 giacomand = Game Master
 rockdtben = Game Master
 sieve = Game Master

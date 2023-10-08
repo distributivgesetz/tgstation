@@ -1,14 +1,16 @@
 files:
-  map_files: _maps/**/**.dmm
-  code_files: code/**/**.dm
-  unit_test_files: code/modules/unit_tests/**/**.dm
+  map_files:
+    - _maps/**/**.dmm
+  code_files:
+    - code/**/**.dm
+  unit_test_files:
+    - code/modules/unit_tests/**/**.dm
   code_x_515:
   - !files code_files
   - code/**/!(__byond_version_compat).dm
 
 sections:
-  map_issues:
-    section: Map Issues
+  - name: Map Issues
     checks:
       check-non-tgm:
         greps: !asis ^".+" = \(.+\)
@@ -17,48 +19,47 @@ sections:
         message: >
           Non-TGM formatted map detected, please convert it using Map Merger
 
-      map_comments:
+      map-comments:
         greps: !piped
           - //
           - !invert //MAP CONVERTED BY dmm2tgm.py THIS HEADER COMMENT PREVENTS RECONVERSION, DO NOT REMOVE
           - !invert name|desc
         files:
-          - !files code_files
+          - !files map_files
         message: >
           Unexpected commented out line detected in this map file, please remove it
 
-      iconstate_tags:
+      iconstate-tags:
         greps: ^\ttag = "icon
         files:
           - !files map_files
         message: >
           Tag vars from icon state generation detected in maps, please remove them
 
-      invalid_map_procs:
+      invalid-map-procs:
         greps: (new|newlist|icon|matrix|sound)\(.+\)
         files:
           - !files map_files
         message: >
           Using unsupported procs in variables in a map file, please remove all instances of this
 
-      empty_variable_values:
+      empty-variable-values:
         greps: '{\n\t},'
         files:
           - !files map_files
         message: >
           Empty variable value list detected in map file, please remove the curly brackets entirely
 
-      armor_lists:
+      armor-lists:
         greps: \tarmor = list
         files:
           - !files map_files
         message: >
-          Outdated armor list in map file, please remove it
+          Outdated armor list in map file, please update it
 
-  spelling_mistakes:
-    section: Spelling Mistakes
+  - name: Spelling Mistakes
     checks:
-      nanotrasen_extra_n:
+      nanotrasen-extra-n:
         greps: !ignorecase nanotransen
         files:
           - !files code_files
@@ -66,7 +67,7 @@ sections:
         message: >
           Misspelling(s) of Nanotrasen detected in maps, please remove the extra N(s)
 
-      nanotrasen_capital_t:
+      nanotrasen-capital-t:
         greps:
           - NanoTrasen
           - nanoTrasen
@@ -76,7 +77,7 @@ sections:
         message: >
           Misspelling(s) of Nanotrasen detected in maps, please uncapitalize the T(s)
 
-      centcom_extra_m:
+      centcom-extra-m:
         greps: !ignorecase centcomm
         files:
           - !files code_files
@@ -84,34 +85,32 @@ sections:
         message: >
           Misspelling(s) of CentCom detected in maps, please remove the extra M(s)
 
-  whitespace_issues:
-    section: Whitespace Issues
+  - name: Whitespace Issues
     checks:
-      enforce_space_indentation:
+      enforce-space-indentation:
         greps: (^ {2})|(^ [^ * ])|(^    +)
         files:
           - !files code_files
         message: >
           Space indentation detected, please use tab indentation
 
-      mixed_indentation:
+      mixed-indentation:
         greps: ^\t+ [^ *]
         files:
           - !files code_files
         message: >
           Mixed indentation detected, please use only tabs
 
-      trailing_newlines:
+      trailing-newlines:
         greps: !asis '[^\n]$(?!\n)'
         files:
           - !files code_files
         message: >
           File(s) with no trailing newline detected, please add one
 
-  unit_test_issues:
-    section: Unit Test Issues
+  - name: Unit Test Issues
     checks:
-      consistent_humans_in_tests:
+      consistent-humans-in-tests:
         greps:
           - allocate\(/mob/living/carbon/human[,\)]
           - new /mob/living/carbon/human\s?\(
@@ -122,31 +121,30 @@ sections:
           Usage of mob/living/carbon/human detected in a unit test,
           please use mob/living/carbon/human/consistent instead
 
-  code_quality_issues:
-    section: Code Quality Issues
+  - name: Code Quality Issues
     checks:
-      global_vars:
+      global-vars:
         greps: ^/*var/
         files:
           - !files code_files
         message: >
           Unmanaged global var use detected in code, please use the helpers
 
-      var_in_proc_args:
+      var-in-proc-args:
         greps: ^/[\w/]\S+\(.*(var/|, ?var/.*).*\)
         files:
           - !files code_files
         message: >
           Changed files contains a proc argument starting with 'var', please remove it
 
-      can_perform_action_arguments:
+      can-perform-action-arguments:
         greps: can_perform_action\(\s*\)
         files:
           - !files code_files
         message: >
           Found a can_perform_action() proc with improper arguments, please fix arguments or remove it
 
-      src_as_trait_source:
+      src-as-trait-source:
         greps: !ignorecase (add_trait|remove_trait)\(.+,\s*.+,\s*src\)
         files:
           - !files code_files
@@ -154,7 +152,7 @@ sections:
           Found a add_trait() or remove_trait() proc with src as the source.
           Source must be a string key - don't use references to datums as a source, use 'REF(src)' instead
 
-      src_as_trait_sources:
+      src-as-trait-sources:
         greps: !ignorecase (add_traits|remove_traits)\(.+,\s*src\)
         files:
           - !files code_files
@@ -162,21 +160,21 @@ sections:
           Found a add_traits() or remove_traits() proc with src as the source.
           Sources must be a string key - don't use references to datums as sources, use 'REF(src)' instead
 
-      balloon_alert_arguments:
+      balloon-alert-arguments:
         greps: balloon_alert\(".*"\)
         files:
           - !files code_files
         message: >
           Found a balloon alert without a recipient, please add one
 
-      balloon_alert_no_spans:
+      balloon-alert-no-spans:
         greps: balloon_alert(.*span_)
         files:
           - !files code_files
         message: >
           Found a balloon alert using a span, this is not supported
 
-      balloon_alert_idiomatic_usage:
+      balloon-alert-idiomatic-usage:
         greps: balloon_alert\(.*?, ?"[A-Z]
         files:
           - !files code_files
@@ -184,7 +182,7 @@ sections:
           Balloon alerts should not start with capital letters. This includes text like 'AI'.
           If this is a false positive, wrap the text in UNLINT()
 
-      update_icon_updates_onmob_element_usage:
+      update-icon-updates-onmob-element-usage:
         greps: AddElement\(/datum/element/update_icon_updates_onmob.+ITEM_SLOT_HANDS
         files:
           - !files code_files
@@ -192,35 +190,35 @@ sections:
           update_icon_updates_onmob element automatically updates ITEM_SLOT_HANDS,
           this is redundant and should be removed
 
-      to_chat_sanity:
+      to-chat-sanity:
         greps: to_chat\((?!.*,).*\)
         files:
           - !files code_files
         message: >
           to_chat() call is missing a recipient, please add one
 
-      timer_flag_sanity:
+      timer-flag-sanity:
         greps: addtimer\((?=.*TIMER_OVERRIDE)(?!.*TIMER_UNIQUE).*\)'
         files:
           - !files code_files
         message: >
           TIMER_OVERRIDE used without TIMER_UNIQUE, please add TIMER_UNIQUE or remove TIMER_OVERRIDE
 
-      datum_stockpart_sanity:
+      datum-stockpart-sanity:
         greps: for\b.*/obj/item/stock_parts/(?!cell)(?![\w_]+ in )
         files:
           - !files code_files
         message: >
           Please use datum/stock_part instead
 
-      improper_atom_initialize_args:
+      improper-atom-initialize-args:
         greps: ^/(obj|mob|turf|area|atom)/.+/Initialize\((?!mapload).*\)
         files:
           - !files code_files
         message: >
           Initialize() override without 'mapload' argument, please add 'mapload' as the first argument
 
-      proc_ref_syntax:
+      proc-ref-syntax:
         greps: \.proc/
         files:
           - !files code_x_515

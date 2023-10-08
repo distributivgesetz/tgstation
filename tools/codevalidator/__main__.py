@@ -58,7 +58,8 @@ def main():
         try:
             checks = yaml.safe_load(config_file)
         except yaml.YAMLError as exc:
-            logger.error(f'Loading failure occurred: {exc}')
+            logger.error(f'Could not read supplied config, please fix the errors.')
+            logger.error(exc)
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark # type: ignore
                 logger.error(f'Error position: ({mark.line + 1}, {mark.column + 1})')
@@ -68,11 +69,7 @@ def main():
 
     validator = CodeValidator(checks, gh_ci)
 
-    try:
-        validator.full_run()
-    except ValidationError as e:
-        logger.error(f'Validator failure occurred: {e}')
-        return 1
+    validator.full_run()
 
     return 0 if len(validator.annotations) == 0 else 1
 
