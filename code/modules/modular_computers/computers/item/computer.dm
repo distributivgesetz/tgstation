@@ -749,14 +749,6 @@
 		to_chat(user, span_notice("You plug \the [attacking_item] to \the [src]."))
 		return
 
-	if(istype(attacking_item, /obj/item/photo))
-		var/obj/item/photo/attacking_photo = attacking_item
-		if(store_file(new /datum/computer_file/picture(attacking_photo.picture)))
-			balloon_alert(user, "photo scanned")
-		else
-			balloon_alert(user, "no space!")
-		return
-
 	// Check if any Applications need it
 	for(var/datum/computer_file/item_holding_app as anything in stored_files)
 		if(item_holding_app.application_attackby(attacking_item, user))

@@ -4,14 +4,13 @@ import { createSearch } from 'common/string';
 import { BooleanLike } from 'common/react';
 import { NtosWindow } from '../../layouts';
 
-import { NtChat, NtMessenger, NtPicture } from './types';
+import { NtChat, NtMessenger } from './types';
 import { ChatScreen } from './ChatScreen';
 import { sortBy } from 'common/collections';
 
 type NtosMessengerData = {
   can_spam: BooleanLike;
-  is_silicon: BooleanLike;
-  owner?: NtMessenger;
+  owner: NtMessenger | null;
   saved_chats: Record<string, NtChat>;
   messengers: Record<string, NtMessenger>;
   sort_by_job: BooleanLike;
@@ -19,8 +18,7 @@ type NtosMessengerData = {
   alert_able: BooleanLike;
   sending_and_receiving: BooleanLike;
   open_chat: string;
-  stored_photos?: NtPicture[];
-  selected_photo_path?: string;
+  selected_photo_path: string | null;
   on_spam_cooldown: BooleanLike;
   virus_attach: BooleanLike;
   sending_virus: BooleanLike;
@@ -29,9 +27,7 @@ type NtosMessengerData = {
 export const NtosMessenger = (props) => {
   const { data } = useBackend<NtosMessengerData>();
   const {
-    is_silicon,
     saved_chats,
-    stored_photos,
     selected_photo_path,
     open_chat,
     messengers,
@@ -48,9 +44,7 @@ export const NtosMessenger = (props) => {
     } else {
       content = (
         <ChatScreen
-          storedPhotos={stored_photos}
           selectedPhoto={selected_photo_path}
-          isSilicon={is_silicon}
           sendingVirus={sending_virus}
           canReply={openChat ? openChat.can_reply : !!temporaryRecipient}
           messages={openChat ? openChat.messages : []}
@@ -71,8 +65,30 @@ export const NtosMessenger = (props) => {
   );
 };
 
+const chatToButton = (chat: NtChat) => {
+  return (
+    <ChatButton
+      key={chat.ref}
+      name={`${chat.recipient.name} (${chat.recipient.job})`}
+      chatRef={chat.ref}
+      unreads={chat.unread_messages}
+    />
+  );
+};
+
+const messengerToButton = (messenger: NtMessenger) => {
+  return (
+    <ChatButton
+      key={messenger.ref}
+      name={`${messenger.name} (${messenger.job})`}
+      chatRef={messenger.ref!}
+      unreads={0}
+    />
+  );
+};
+
 const ContactsScreen = (props: any) => {
-  const { act, data } = useBackend<NtosMessengerData>();
+  const { act, data } = useBackend<NtosMessengerData>(context);
   const {
     owner,
     alert_silenced,
@@ -82,14 +98,13 @@ const ContactsScreen = (props: any) => {
     messengers,
     sort_by_job,
     can_spam,
-    is_silicon,
     virus_attach,
     sending_virus,
   } = data;
 
   const [searchUser, setSearchUser] = useLocalState('searchUser', '');
 
-  const sortByUnreads = sortBy<NtChat>((chat) => chat.unread_messages);
+  const sortByUnreads = sortBy<NtChat>((chat) => -chat.unread_messages);
 
   const searchChatByName = createSearch(
     searchUser,
@@ -99,28 +114,6 @@ const ContactsScreen = (props: any) => {
     searchUser,
     (messenger: NtMessenger) => messenger.name + messenger.job
   );
-
-  const chatToButton = (chat: NtChat) => {
-    return (
-      <ChatButton
-        key={chat.ref}
-        name={`${chat.recipient.name} (${chat.recipient.job})`}
-        chatRef={chat.ref}
-        unreads={chat.unread_messages}
-      />
-    );
-  };
-
-  const messengerToButton = (messenger: NtMessenger) => {
-    return (
-      <ChatButton
-        key={messenger.ref}
-        name={`${messenger.name} (${messenger.job})`}
-        chatRef={messenger.ref!}
-        unreads={0}
-      />
-    );
-  };
 
   const openChatsArray = sortByUnreads(Object.values(saved_chats)).filter(
     searchChatByName
@@ -140,8 +133,6 @@ const ContactsScreen = (props: any) => {
     .map(messengerToButton)
     .concat(openChatsArray.filter((chat) => !chat.visible).map(chatToButton));
 
-  const noId = !owner && !is_silicon;
-
   return (
     <Stack fill vertical>
       <Stack.Item>
@@ -149,7 +140,7 @@ const ContactsScreen = (props: any) => {
           <Stack vertical textAlign="center">
             <Box bold>
               <Icon name="address-card" mr={1} />
-              SpaceMessenger V6.5.3
+              SpaceMessenger V6.5.5
             </Box>
             <Box italic opacity={0.3} mt={1}>
               Bringing you spy-proof communications since 2467.
@@ -251,7 +242,7 @@ const ContactsScreen = (props: any) => {
           <SendToAllSection />
         </Stack.Item>
       )}
-      {noId && <NoIDDimmer />}
+      {!owner && <NoIDDimmer />}
     </Stack>
   );
 };

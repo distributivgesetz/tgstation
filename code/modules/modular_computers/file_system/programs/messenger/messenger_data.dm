@@ -46,37 +46,40 @@ GLOBAL_LIST_EMPTY_TYPED(pda_messengers, /datum/computer_file/program/messenger)
 	return STRINGIFY_PDA_TARGET(computer.saved_identification, computer.saved_job)
 
 /**
- * Chat log data type, stores information about the recipient,
- * the messages themselves and other metadata.
+ * Stores information about the recipient, the messages themselves and other metadata.
  */
 /datum/pda_chat
 	/// The cached name of the recipient, so we can
-	/// identify this chat even after the recipient is deleted
+	/// identify this chat even after the recipient is deleted.
 	var/cached_name = "Unknown"
-	/// The cached job of the recipient
+	/// The cached job of the recipient.
 	var/cached_job = "Unknown"
-	/// Weakref to the recipient messenger
+	/// Weakref to the recipient messenger.
 	var/datum/weakref/recipient = null
-	/// A list of messages in this chat
+	/// A list of messages in this chat.
 	var/list/datum/pda_message/messages = list()
-	/// Used to determine if we should show this in recents
+	/// Whether we should show this chat in recents.
 	var/visible_in_recents = FALSE
-	/// Used to determine if you can talk in a chat
+	/// Whether the user can reply in this chat or not.
 	var/can_reply = TRUE
-	/// Saved draft of a message so the sender can leave and come back later
+	/// Saved draft of a message.
 	var/message_draft = ""
-	/// Number of unread messages in this chat
+	/// Number of unread messages in this chat.
 	var/unread_messages = 0
 
 /datum/pda_chat/New(datum/computer_file/program/messenger/recipient)
 	src.recipient = WEAKREF(recipient)
 	src.can_reply = !isnull(recipient)
 
-/// Adds a message to the chat log and optionally shows the chat in recents.
-/// Call this instead of adding to messages directly.
+/**
+ * Adds a message to the chat log and optionally shows the chat in recents.
+ *
+ * * datum/pda_message/message - The message to be added.
+ * * show_in_recents - Whether the chat should show up in recents. Defaults to TRUE.
+ */
 /datum/pda_chat/proc/add_message(datum/pda_message/message, show_in_recents = TRUE)
 	messages += message
-	if(!visible_in_recents && show_in_recents)
+	if(show_in_recents)
 		visible_in_recents = TRUE
 	return message
 
@@ -128,17 +131,17 @@ GLOBAL_LIST_EMPTY_TYPED(pda_messengers, /datum/computer_file/program/messenger)
 	/// Whether the message is sent by the user or not.
 	var/outgoing
 	/// The name of the photo asset in the SSassets cache, the URL of which is sent to the client.
-	var/photo_name
+	var/photo_key
 	/// Whether this message was sent to everyone.
 	var/everyone
 	/// The station time at which this message was made.
 	var/timestamp
 
-/datum/pda_message/New(message, outgoing, timestamp, photo_name = null, everyone = FALSE)
+/datum/pda_message/New(message, outgoing, timestamp, photo_key = null, everyone = FALSE)
 	src.message = message
 	src.outgoing = outgoing
 	src.timestamp = timestamp
-	src.photo_name = photo_name
+	src.photo_key = photo_key
 	src.everyone = everyone
 
 /// Returns an associative list of the message's data, used for ui_data calls.
@@ -146,7 +149,7 @@ GLOBAL_LIST_EMPTY_TYPED(pda_messengers, /datum/computer_file/program/messenger)
 	var/list/data = list()
 	data["message"] = message
 	data["outgoing"] = outgoing
-	data["photo_path"] = photo_name ? SSassets.transport.get_asset_url(photo_name) : null
+	data["photo_path"] = photo_key ? SSassets.transport.get_asset_url(photo_key) : null
 	data["everyone"] = everyone
 	data["timestamp"] = timestamp
 	return data

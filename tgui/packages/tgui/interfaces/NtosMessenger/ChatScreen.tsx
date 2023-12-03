@@ -1,6 +1,6 @@
 import { Stack, Section, Button, Box, Input, Modal, Tooltip, Icon } from '../../components';
-import { Component, RefObject, createRef, SFC } from 'inferno';
-import { NtMessage, NtMessenger, NtPicture } from './types';
+import { Component, RefObject, createRef, SFC, InfernoNode } from 'inferno';
+import { NtMessage, NtMessenger } from './types';
 import { BooleanLike } from 'common/react';
 import { useBackend } from '../../backend';
 import { decodeHtmlEntities } from 'common/string';
@@ -8,20 +8,17 @@ import { decodeHtmlEntities } from 'common/string';
 type ChatScreenProps = {
   canReply: BooleanLike;
   chatRef?: string;
-  isSilicon: BooleanLike;
   messages: NtMessage[];
   recipient: NtMessenger;
-  selectedPhoto?: string;
+  selectedPhoto: string | null;
   sendingVirus: BooleanLike;
-  storedPhotos?: NtPicture[];
   unreads: number;
 };
 
 type ChatScreenState = {
   canSend: boolean;
   message: string;
-  previewingImage?: string;
-  selectingPhoto: boolean;
+  previewingPhoto?: string;
 };
 
 const READ_UNREADS_TIME_MS = 1000;
@@ -33,7 +30,6 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
 
   state: ChatScreenState = {
     message: '',
-    selectingPhoto: false,
     canSend: true,
   };
 
@@ -124,7 +120,7 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
     if (isSilicon) {
       act('PDA_siliconSelectPhoto');
     } else {
-      this.setState({ selectingPhoto: true });
+      act('PDA_uploadPhoto');
     }
   }
 
@@ -159,11 +155,10 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
       recipient,
       chatRef,
       selectedPhoto,
-      storedPhotos,
       sendingVirus,
       unreads,
     } = this.props;
-    const { message, canSend, previewingImage, selectingPhoto } = this.state;
+    const { message, canSend, previewingPhoto } = this.state;
 
     let filteredMessages: JSX.Element[] = [];
 
@@ -173,9 +168,10 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
         index === 0 || messages[index - 1].outgoing === message.outgoing
       );
 
-      // this code shouldn't be reached if there's no chat
       if (index === messages.length - unreads) {
-        filteredMessages.push(<ChatDivider mt={isSwitch ? 3 : 1} />);
+        filteredMessages.push(
+          <ChatDivider mt={isSwitch ? 3 : 1} text="Unread Messages" />
+        );
       }
 
       filteredMessages.push(
@@ -188,7 +184,7 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
             timestamp={message.timestamp}
             onPreviewImage={
               message.photo_path
-                ? () => this.setState({ previewingImage: message.photo_path! })
+                ? () => this.setState({ previewingPhoto: message.photo_path! })
                 : undefined
             }
           />
@@ -206,39 +202,6 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
           </Box>
         </Section>
       );
-    } else if (selectingPhoto) {
-      const photos = storedPhotos!.map((photo) => (
-        <Stack.Item key={photo.uid}>
-          <Button
-            pt={1}
-            selected={selectedPhoto === photo.path}
-            onClick={() => {
-              act('PDA_selectPhoto', { uid: photo.uid });
-              this.setState({ selectingPhoto: false });
-            }}>
-            <Box as="img" src={photo.path} maxHeight={10} />
-          </Button>
-        </Stack.Item>
-      ));
-
-      sendingBar = (
-        <Section fill>
-          <Button
-            icon="arrow-left"
-            content="Back"
-            onClick={() => this.setState({ selectingPhoto: false })}
-          />
-          {photos.length > 0 ? (
-            <Section scrollableHorizontal>
-              <Stack fill>{photos}</Stack>
-            </Section>
-          ) : (
-            <Box as="span" ml={1}>
-              No photos found
-            </Box>
-          )}
-        </Section>
-      );
     } else {
       const attachmentButton = sendingVirus ? (
         <Button
@@ -248,8 +211,8 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
         />
       ) : (
         <Button
-          tooltip="Add attachment"
-          icon="image"
+          tooltip={selectedPhoto ? 'View attachment' : 'Scan photo'}
+          icon={selectedPhoto ? 'image' : 'upload'}
           onClick={this.handleSelectPicture}
         />
       );
@@ -272,37 +235,22 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
 
       sendingBar = (
         <Section fill>
-          <Stack vertical>
-            {selectedPhoto && (
-              <Stack.Item>
-                <Button
-                  pt={1}
-                  onClick={() => act('PDA_clearPhoto')}
-                  tooltip="Remove attachment"
-                  tooltipPosition="auto-end">
-                  <Box as="img" src={selectedPhoto} />
-                </Button>
-              </Stack.Item>
-            )}
-            <Stack.Item>
-              <Stack fill align="center">
-                <Stack.Item grow={1}>
-                  <Input
-                    placeholder={`Send message to ${recipient.name}...`}
-                    fluid
-                    autoFocus
-                    width="100%"
-                    justify
-                    id="input"
-                    value={message}
-                    maxLength={1024}
-                    onInput={this.handleMessageInput}
-                    onEnter={this.handleSendMessage}
-                  />
-                </Stack.Item>
-                {buttons}
-              </Stack>
+          <Stack fill align="center">
+            <Stack.Item grow={1}>
+              <Input
+                placeholder={`Send message to ${recipient.name}...`}
+                fluid
+                autoFocus
+                width="100%"
+                justify
+                id="input"
+                value={message}
+                maxLength={1024}
+                onInput={this.handleMessageInput}
+                onEnter={this.handleSendMessage}
+              />
             </Stack.Item>
+            {buttons}
           </Stack>
         </Section>
       );
@@ -310,27 +258,29 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
 
     return (
       <Stack vertical fill>
-        <Section>
-          <Button
-            icon="arrow-left"
-            content="Back"
-            onClick={() => act('PDA_viewMessages', { ref: null })}
-          />
-          {chatRef && (
-            <>
-              <Button
-                icon="box-archive"
-                content="Close chat"
-                onClick={() => act('PDA_closeMessages', { ref: chatRef })}
-              />
-              <Button.Confirm
-                icon="trash-can"
-                content="Delete chat"
-                onClick={() => act('PDA_clearMessages', { ref: chatRef })}
-              />
-            </>
-          )}
-        </Section>
+        <Stack.Item>
+          <Section>
+            <Button
+              icon="arrow-left"
+              content="Back"
+              onClick={() => act('PDA_viewMessages', { ref: null })}
+            />
+            {chatRef && (
+              <>
+                <Button
+                  icon="box-archive"
+                  content="Close chat"
+                  onClick={() => act('PDA_closeMessages', { ref: chatRef })}
+                />
+                <Button.Confirm
+                  icon="trash-can"
+                  content="Delete chat"
+                  onClick={() => act('PDA_clearMessages', { ref: chatRef })}
+                />
+              </>
+            )}
+          </Section>
+        </Stack.Item>
 
         <Stack.Item grow={1}>
           <Section
@@ -348,28 +298,37 @@ export class ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
                   <Stack.Divider />
                 </>
               )}
-
               {filteredMessages}
             </Stack>
           </Section>
         </Stack.Item>
 
         <Stack.Item>{sendingBar}</Stack.Item>
-        {previewingImage && (
-          <Modal className="NtosChatLog__ImagePreview">
-            <Section
-              title="Photo Preview"
-              buttons={
+
+        {previewingPhoto && (
+          <PhotoPreview
+            img={previewingPhoto}
+            buttons={
+              <>
+                {previewingPhoto === selectedPhoto && (
+                  <Button
+                    content="Clear Photo"
+                    color="red"
+                    icon="xmark"
+                    onClick={() => {
+                      this.setState({ previewingPhoto: undefined });
+                      act('PDA_clearPhoto');
+                    }}
+                  />
+                )}
                 <Button
-                  icon="arrow-left"
                   content="Back"
-                  tooltipPosition="left"
-                  onClick={() => this.setState({ previewingImage: undefined })}
+                  icon="arrow-left"
+                  onClick={() => this.setState({ previewingPhoto: undefined })}
                 />
-              }>
-              <Box as="img" src={previewingImage} />
-            </Section>
-          </Modal>
+              </>
+            }
+          />
         )}
       </Stack>
     );
@@ -419,11 +378,31 @@ const ChatMessage = (props: ChatMessageProps) => {
   );
 };
 
-const ChatDivider: SFC<{ mt: number }> = (props) => {
+type PhotoPreviewProps = {
+  buttons: InfernoNode;
+  img: string;
+};
+
+export const PhotoPreview: SFC<PhotoPreviewProps> = (props) => {
   return (
-    <Box className="UnreadDivider" m={0} mt={props.mt}>
+    <Modal className="NtosChatLog__ImagePreview">
+      <Section title="Photo Preview" buttons={props.buttons}>
+        <Box as="img" src={props.img} />
+      </Section>
+    </Modal>
+  );
+};
+
+type ChatDividerProps = {
+  mt: number;
+  text: string;
+};
+
+const ChatDivider: SFC<ChatDividerProps> = (props) => {
+  return (
+    <Box class="ChatDivider" m={0} mt={props.mt}>
       <div />
-      <span>Unread Messages</span>
+      <span>{props.text}</span>
       <div />
     </Box>
   );

@@ -8,11 +8,6 @@ export type NtMessage = {
   timestamp: string;
 };
 
-export type NtPicture = {
-  uid: number;
-  path: string;
-};
-
 export type NtMessenger = {
   name: string;
   job: string;
