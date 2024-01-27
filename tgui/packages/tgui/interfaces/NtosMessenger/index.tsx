@@ -1,12 +1,23 @@
-import { Box, Button, Icon, Section, Stack, Input, TextArea, Dimmer, Divider } from '../../components';
-import { useBackend, useLocalState } from '../../backend';
-import { createSearch } from 'common/string';
-import { BooleanLike } from 'common/react';
-import { NtosWindow } from '../../layouts';
-
-import { NtChat, NtMessenger } from './types';
-import { ChatScreen } from './ChatScreen';
 import { sortBy } from 'common/collections';
+import { BooleanLike } from 'common/react';
+import { createSearch } from 'common/string';
+import { useState } from 'react';
+
+import { useBackend } from '../../backend';
+import {
+  Box,
+  Button,
+  Dimmer,
+  Divider,
+  Icon,
+  Input,
+  Section,
+  Stack,
+  TextArea,
+} from '../../components';
+import { NtosWindow } from '../../layouts';
+import { ChatScreen } from './ChatScreen';
+import { NtChat, NtMessenger } from './types';
 
 type NtosMessengerData = {
   can_spam: BooleanLike;
@@ -65,6 +76,35 @@ export const NtosMessenger = (props) => {
   );
 };
 
+const ContactsScreen = (props: any) => {
+  const { act, data } = useBackend<NtosMessengerData>();
+  const {
+    owner,
+    alert_silenced,
+    alert_able,
+    sending_and_receiving,
+    saved_chats,
+    messengers,
+    sort_by_job,
+    can_spam,
+    is_silicon,
+    virus_attach,
+    sending_virus,
+  } = data;
+
+  const [searchUser, setSearchUser] = useState('');
+
+  const sortByUnreads = sortBy<NtChat>((chat) => chat.unread_messages);
+
+  const searchChatByName = createSearch(
+    searchUser,
+    (chat: NtChat) => chat.recipient.name + chat.recipient.job
+  );
+  const searchMessengerByName = createSearch(
+    searchUser,
+    (messenger: NtMessenger) => messenger.name + messenger.job
+  );
+
 const chatToButton = (chat: NtChat) => {
   return (
     <ChatButton
@@ -116,7 +156,7 @@ const ContactsScreen = (props: any) => {
   );
 
   const openChatsArray = sortByUnreads(Object.values(saved_chats)).filter(
-    searchChatByName
+    searchChatByName,
   );
 
   const filteredChatButtons = openChatsArray
@@ -127,7 +167,7 @@ const ContactsScreen = (props: any) => {
     .filter(
       ([ref, messenger]) =>
         openChatsArray.every((chat) => chat.recipient.ref !== ref) &&
-        searchMessengerByName(messenger)
+        searchMessengerByName(messenger),
     )
     .map(([_, messenger]) => messenger)
     .map(messengerToButton)
@@ -194,7 +234,7 @@ const ContactsScreen = (props: any) => {
               width="220px"
               placeholder="Search by name or job..."
               value={searchUser}
-              onInput={(_: any, value: string) => setSearchUser(value)}
+              onInput={(_, value) => setSearchUser(value)}
             />
           </Stack>
         </Section>
@@ -264,7 +304,8 @@ const ChatButton = (props: ChatButtonProps) => {
       fluid
       onClick={() => {
         act('PDA_viewMessages', { ref: props.chatRef });
-      }}>
+      }}
+    >
       {hasUnreads &&
         `[${unreadMessages <= 9 ? unreadMessages : '9+'} unread message${
           unreadMessages !== 1 ? 's' : ''
@@ -278,7 +319,7 @@ const SendToAllSection = (props) => {
   const { data, act } = useBackend<NtosMessengerData>();
   const { on_spam_cooldown } = data;
 
-  const [message, setmessage] = useLocalState('everyoneMessage', '');
+  const [message, setmessage] = useState('');
 
   return (
     <>
@@ -297,7 +338,8 @@ const SendToAllSection = (props) => {
               onClick={() => {
                 act('PDA_sendEveryone', { message: message });
                 setmessage('');
-              }}>
+              }}
+            >
               Send
             </Button>
           </Stack.Item>
@@ -308,7 +350,7 @@ const SendToAllSection = (props) => {
           height={6}
           value={message}
           placeholder="Send message to everyone..."
-          onInput={(_: any, v: string) => setmessage(v)}
+          onChange={(event, value: string) => setmessage(value)}
         />
       </Section>
     </>

@@ -294,7 +294,7 @@
 /obj/item/surgical_processor //allows medical cyborgs to scan and initiate advanced surgeries
 	name = "surgical processor"
 	desc = "A device for scanning and initiating surgeries from a disk or operating computer."
-	icon = 'icons/obj/device.dmi'
+	icon = 'icons/obj/devices/scanner.dmi'
 	icon_state = "surgical_processor"
 	item_flags = NOBLUDGEON
 	// List of surgeries downloaded into the device.
@@ -535,6 +535,8 @@
 		else
 			limb_snip_candidate.dismember()
 		user.visible_message(span_danger("[src] violently slams shut, amputating [patient]'s [candidate_name]."), span_notice("You amputate [patient]'s [candidate_name] with [src]."))
+		user.log_message("[user] has amputated [patient]'s [candidate_name] with [src]", LOG_GAME)
+		patient.log_message("[patient]'s [candidate_name] has been amputated by [user] with [src]", LOG_GAME)
 
 	if(HAS_MIND_TRAIT(user, TRAIT_MORBID)) //Freak
 		user.add_mood_event("morbid_dismemberment", /datum/mood_event/morbid_dismemberment)

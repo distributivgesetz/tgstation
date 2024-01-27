@@ -361,19 +361,6 @@
 		var/target = href_list["showmessageckeylinkless"]
 		browse_messages(target_ckey = target, linkless = 1)
 
-	else if(href_list["messageread"])
-		if(!isnum(href_list["message_id"]))
-			return
-		var/rounded_message_id = round(href_list["message_id"], 1)
-		var/datum/db_query/query_message_read = SSdbcore.NewQuery(
-			"UPDATE [format_table_name("messages")] SET type = 'message sent' WHERE targetckey = :player_key AND id = :id",
-			list("id" = rounded_message_id, "player_key" = usr.ckey)
-		)
-		if(!query_message_read.warn_execute())
-			qdel(query_message_read)
-			return
-		qdel(query_message_read)
-
 	else if(href_list["messageedits"])
 		if(!check_rights(R_ADMIN))
 			return
@@ -852,7 +839,7 @@
 					status = "<font color='red'><b>Dead</b></font>"
 			health_description = "Status: [status]"
 			health_description += "<br>Brute: [lifer.getBruteLoss()] - Burn: [lifer.getFireLoss()] - Toxin: [lifer.getToxLoss()] - Suffocation: [lifer.getOxyLoss()]"
-			health_description += "<br>Clone: [lifer.getCloneLoss()] - Brain: [lifer.get_organ_loss(ORGAN_SLOT_BRAIN)] - Stamina: [lifer.getStaminaLoss()]"
+			health_description += "<br>Brain: [lifer.get_organ_loss(ORGAN_SLOT_BRAIN)] - Stamina: [lifer.getStaminaLoss()]"
 		else
 			health_description = "This mob type has no health to speak of."
 
