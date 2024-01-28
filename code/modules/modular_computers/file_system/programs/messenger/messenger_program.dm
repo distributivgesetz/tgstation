@@ -281,7 +281,7 @@
 			else
 				var/obj/item/photo/photo = mob_user.get_active_held_item()
 				if(!istype(photo))
-					to_chat(usr, span_warning("You must hold a photo in your active hand!"))
+					computer.balloon_alert(usr, "hold a photo in active hand!")
 					return FALSE
 
 				selected_photo = photo.picture
@@ -476,7 +476,7 @@
 /**
  * Main proc that handles sending a PDA message to people.
  *
- * * atom/source - The mob sending the message.
+ * * atom/source - The atom sending the message.
  * * message - The message string.
  * * list/targets - A target list that can contain both messenger programs or pda chat datums.
  * * everyone - Whether we are sending this to everyone. Used for formatting PDA messages.
@@ -489,8 +489,7 @@
 	if(!message && !selected_image)
 		return FALSE
 
-
-	// upgrade the image asset to a permanent key
+	// upgrade the image asset to a permanent key, making it immutable
 	var/photo_asset_key = null
 	if(selected_image)
 		photo_asset_key = SSmodular_computers.get_next_picture_name()
@@ -618,7 +617,7 @@
 
 	// check for jammers
 	if(is_within_radio_jammer_range(computer) && !rigged)
-		// different message so people can tell that it's a radio jammer
+		// different message so people can tell it's a radio jammer
 		if(sender)
 			to_chat(sender, span_notice("ERROR: Network unavailable, please try again later."))
 		if(alert_able && !alert_silenced)

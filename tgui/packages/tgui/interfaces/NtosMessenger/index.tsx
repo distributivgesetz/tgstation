@@ -35,7 +35,7 @@ type NtosMessengerData = {
   sending_virus: BooleanLike;
 };
 
-export const NtosMessenger = (props) => {
+export const NtosMessenger = () => {
   const { data } = useBackend<NtosMessengerData>();
   const {
     saved_chats,
@@ -46,25 +46,20 @@ export const NtosMessenger = (props) => {
   } = data;
 
   let content: JSX.Element;
-  if (open_chat !== null) {
+  if (open_chat !== null && (saved_chats[open_chat] || messengers[open_chat])) {
     const openChat = saved_chats[open_chat];
     const temporaryRecipient = messengers[open_chat];
-
-    if (!openChat && !temporaryRecipient) {
-      content = <ContactsScreen />;
-    } else {
-      content = (
-        <ChatScreen
-          selectedPhoto={selected_photo_path}
-          sendingVirus={sending_virus}
-          canReply={openChat ? openChat.can_reply : !!temporaryRecipient}
-          messages={openChat ? openChat.messages : []}
-          recipient={openChat ? openChat.recipient : temporaryRecipient}
-          unreads={openChat ? openChat.unread_messages : 0}
-          chatRef={openChat?.ref}
-        />
-      );
-    }
+    content = (
+      <ChatScreen
+        selectedPhoto={selected_photo_path}
+        sendingVirus={!!sending_virus}
+        canReply={!!(openChat?.can_reply ?? temporaryRecipient)}
+        messages={openChat?.messages ?? []}
+        recipient={openChat?.recipient ?? temporaryRecipient}
+        unreads={openChat?.unread_messages ?? 0}
+        chatId={openChat?.ref}
+      />
+    );
   } else {
     content = <ContactsScreen />;
   }
@@ -75,35 +70,6 @@ export const NtosMessenger = (props) => {
     </NtosWindow>
   );
 };
-
-const ContactsScreen = (props: any) => {
-  const { act, data } = useBackend<NtosMessengerData>();
-  const {
-    owner,
-    alert_silenced,
-    alert_able,
-    sending_and_receiving,
-    saved_chats,
-    messengers,
-    sort_by_job,
-    can_spam,
-    is_silicon,
-    virus_attach,
-    sending_virus,
-  } = data;
-
-  const [searchUser, setSearchUser] = useState('');
-
-  const sortByUnreads = sortBy<NtChat>((chat) => chat.unread_messages);
-
-  const searchChatByName = createSearch(
-    searchUser,
-    (chat: NtChat) => chat.recipient.name + chat.recipient.job
-  );
-  const searchMessengerByName = createSearch(
-    searchUser,
-    (messenger: NtMessenger) => messenger.name + messenger.job
-  );
 
 const chatToButton = (chat: NtChat) => {
   return (
@@ -127,8 +93,8 @@ const messengerToButton = (messenger: NtMessenger) => {
   );
 };
 
-const ContactsScreen = (props: any) => {
-  const { act, data } = useBackend<NtosMessengerData>(context);
+const ContactsScreen = () => {
+  const { act, data } = useBackend<NtosMessengerData>();
   const {
     owner,
     alert_silenced,
@@ -142,17 +108,17 @@ const ContactsScreen = (props: any) => {
     sending_virus,
   } = data;
 
-  const [searchUser, setSearchUser] = useLocalState('searchUser', '');
+  const [searchUser, setSearchUser] = useState('');
 
   const sortByUnreads = sortBy<NtChat>((chat) => -chat.unread_messages);
 
   const searchChatByName = createSearch(
     searchUser,
-    (chat: NtChat) => chat.recipient.name + chat.recipient.job
+    (chat: NtChat) => chat.recipient.name + chat.recipient.job,
   );
   const searchMessengerByName = createSearch(
     searchUser,
-    (messenger: NtMessenger) => messenger.name + messenger.job
+    (messenger: NtMessenger) => messenger.name + messenger.job,
   );
 
   const openChatsArray = sortByUnreads(Object.values(saved_chats)).filter(
@@ -315,7 +281,7 @@ const ChatButton = (props: ChatButtonProps) => {
   );
 };
 
-const SendToAllSection = (props) => {
+const SendToAllSection = () => {
   const { data, act } = useBackend<NtosMessengerData>();
   const { on_spam_cooldown } = data;
 
@@ -350,7 +316,7 @@ const SendToAllSection = (props) => {
           height={6}
           value={message}
           placeholder="Send message to everyone..."
-          onChange={(event, value: string) => setmessage(value)}
+          onChange={(_, value: string) => setmessage(value)}
         />
       </Section>
     </>
@@ -365,7 +331,7 @@ const NoIDDimmer = () => {
           <Icon color="red" name="address-card" size={10} />
         </Stack>
         <Stack.Item fontSize="18px">
-          Please imprint an ID to continue.
+          Please imprint an ID to contfinue.
         </Stack.Item>
       </Stack>
     </Dimmer>
