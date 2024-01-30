@@ -16,7 +16,7 @@ import {
   TextArea,
 } from '../../components';
 import { NtosWindow } from '../../layouts';
-import { ChatScreen } from './ChatScreen';
+import { ChatScreen, PhotoPreview } from './ChatScreen';
 import { NtChat, NtMessenger } from './types';
 
 type NtosMessengerData = {
@@ -157,37 +157,32 @@ const ContactsScreen = () => {
               <Button
                 icon="bell"
                 disabled={!alert_able}
-                content={
-                  alert_able && !alert_silenced ? 'Ringer: On' : 'Ringer: Off'
-                }
                 onClick={() => act('PDA_toggleAlerts')}
-              />
+              >
+                {alert_able && !alert_silenced ? 'Ringer: On' : 'Ringer: Off'}
+              </Button>
               <Button
                 icon="address-card"
-                content={
-                  sending_and_receiving
-                    ? 'Send / Receive: On'
-                    : 'Send / Receive: Off'
-                }
                 onClick={() => act('PDA_toggleSendingAndReceiving')}
-              />
-              <Button
-                icon="bell"
-                content="Set Ringtone"
-                onClick={() => act('PDA_ringSet')}
-              />
-              <Button
-                icon="sort"
-                content={`Sort by: ${sort_by_job ? 'Job' : 'Name'}`}
-                onClick={() => act('PDA_changeSortStyle')}
-              />
+              >
+                {sending_and_receiving
+                  ? 'Send / Receive: On'
+                  : 'Send / Receive: Off'}
+              </Button>
+              <Button icon="bell" onClick={() => act('PDA_ringSet')}>
+                Set Ringtone
+              </Button>
+              <Button icon="sort" onClick={() => act('PDA_changeSortStyle')}>
+                {`Sort by: ${sort_by_job ? 'Job' : 'Name'}`}
+              </Button>
               {!!virus_attach && (
                 <Button
                   icon="bug"
                   color="bad"
-                  content={`Attach Virus: ${sending_virus ? 'Yes' : 'No'}`}
                   onClick={() => act('PDA_toggleVirus')}
-                />
+                >
+                  {`Attach Virus: ${sending_virus ? 'Yes' : 'No'}`}
+                </Button>
               )}
             </Box>
           </Stack>
@@ -284,9 +279,10 @@ const ChatButton = (props: ChatButtonProps) => {
 
 const SendToAllSection = () => {
   const { data, act } = useBackend<NtosMessengerData>();
-  const { on_spam_cooldown } = data;
+  const { on_spam_cooldown, selected_photo_path } = data;
 
   const [message, setmessage] = useState('');
+  const [previewingPhoto, setPreviewingPhoto] = useState(false);
 
   return (
     <>
@@ -298,9 +294,24 @@ const SendToAllSection = () => {
           </Stack.Item>
           <Stack.Item>
             <Button
+              tooltip={
+                selected_photo_path ? 'View photo' : 'Scan photo in hand'
+              }
+              icon={selected_photo_path ? 'image' : 'upload'}
+              onClick={
+                selected_photo_path
+                  ? () => setPreviewingPhoto(true)
+                  : () => act('PDA_uploadPhoto')
+              }
+            />
+          </Stack.Item>
+          <Stack.Item>
+            <Button
               icon="arrow-right"
               disabled={on_spam_cooldown || message === ''}
-              tooltip={on_spam_cooldown && 'Wait before sending more messages!'}
+              tooltip={
+                !!on_spam_cooldown && 'Wait before sending more messages!'
+              }
               tooltipPosition="auto-start"
               onClick={() => {
                 act('PDA_sendEveryone', { message: message });
@@ -320,6 +331,31 @@ const SendToAllSection = () => {
           onChange={(_, value: string) => setmessage(value)}
         />
       </Section>
+      {selected_photo_path && previewingPhoto && (
+        <PhotoPreview
+          img={selected_photo_path}
+          buttons={
+            <>
+              <Button
+                color="red"
+                icon="xmark"
+                onClick={() => {
+                  setPreviewingPhoto(false);
+                  act('PDA_clearPhoto');
+                }}
+              >
+                Clear Photo
+              </Button>
+              <Button
+                icon="arrow-left"
+                onClick={() => setPreviewingPhoto(false)}
+              >
+                Back
+              </Button>
+            </>
+          }
+        />
+      )}
     </>
   );
 };
@@ -328,9 +364,9 @@ const NoIDDimmer = () => {
   return (
     <Dimmer>
       <Stack align="baseline" vertical>
-        <Stack ml={-2}>
+        <Stack.Item ml={-2}>
           <Icon color="red" name="address-card" size={10} />
-        </Stack>
+        </Stack.Item>
         <Stack.Item fontSize="18px">
           Please imprint an ID to contfinue.
         </Stack.Item>

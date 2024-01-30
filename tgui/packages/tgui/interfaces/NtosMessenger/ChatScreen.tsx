@@ -267,16 +267,14 @@ export const ChatScreen = (props: ChatScreenProps) => {
   );
 };
 
-type ChatMessageProps = {
+const ChatMessage = (props: {
   outgoing: BooleanLike;
   message: string;
   everyone: BooleanLike;
   timestamp: string;
   photoPath?: string;
   onPreviewImage?: () => void;
-};
-
-const ChatMessage = (props: ChatMessageProps) => {
+}) => {
   const { message, everyone, outgoing, photoPath, timestamp, onPreviewImage } =
     props;
 
@@ -311,12 +309,7 @@ const ChatMessage = (props: ChatMessageProps) => {
   );
 };
 
-type PhotoPreviewProps = {
-  buttons: JSX.Element;
-  img: string;
-};
-
-const PhotoPreview = (props: PhotoPreviewProps) => {
+export const PhotoPreview = (props: { buttons: JSX.Element; img: string }) => {
   return (
     <Modal className="NtosChatLog__ImagePreview">
       <Section title="Photo Preview" buttons={props.buttons}>
@@ -326,12 +319,7 @@ const PhotoPreview = (props: PhotoPreviewProps) => {
   );
 };
 
-type ChatDividerProps = {
-  mt: number;
-  text: string;
-};
-
-const ChatDivider = (props: ChatDividerProps) => {
+const ChatDivider = (props: { mt: number; text: string }) => {
   return (
     <Box className="ChatDivider" m={0} mt={props.mt}>
       <div />
