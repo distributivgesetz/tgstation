@@ -302,7 +302,7 @@ const ChatMessage = (props: {
           color="transparent"
           onClick={onPreviewImage}
         >
-          <Image src={photoPath} mt={1} />
+          <Image src={photoPath} mt={1} style={{ border: '2px solid' }} />
         </Button>
       )}
     </Box>

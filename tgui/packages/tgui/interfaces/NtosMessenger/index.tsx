@@ -102,6 +102,7 @@ const ContactsScreen = () => {
     alert_able,
     sending_and_receiving,
     saved_chats,
+    selected_photo_path,
     messengers,
     sort_by_job,
     can_spam,
@@ -110,6 +111,7 @@ const ContactsScreen = () => {
   } = data;
 
   const [searchUser, setSearchUser] = useState('');
+  const [previewingPhoto, setPreviewingPhoto] = useState(false);
 
   const sortByUnreads = sortBy<NtChat>((chat) => -chat.unread_messages);
 
@@ -241,8 +243,33 @@ const ContactsScreen = () => {
       </Stack.Item>
       {!!can_spam && (
         <Stack.Item>
-          <SendToAllSection />
+          <SendToAllSection onPreview={() => setPreviewingPhoto(true)} />
         </Stack.Item>
+      )}
+      {selected_photo_path && previewingPhoto && (
+        <PhotoPreview
+          img={selected_photo_path}
+          buttons={
+            <>
+              <Button
+                color="red"
+                icon="xmark"
+                onClick={() => {
+                  setPreviewingPhoto(false);
+                  act('PDA_clearPhoto');
+                }}
+              >
+                Clear Photo
+              </Button>
+              <Button
+                icon="arrow-left"
+                onClick={() => setPreviewingPhoto(false)}
+              >
+                Back
+              </Button>
+            </>
+          }
+        />
       )}
       {!owner && <NoIDDimmer />}
     </Stack>
@@ -277,12 +304,11 @@ const ChatButton = (props: ChatButtonProps) => {
   );
 };
 
-const SendToAllSection = () => {
+const SendToAllSection = (props: { onPreview: () => void }) => {
   const { data, act } = useBackend<NtosMessengerData>();
   const { on_spam_cooldown, selected_photo_path } = data;
 
   const [message, setmessage] = useState('');
-  const [previewingPhoto, setPreviewingPhoto] = useState(false);
 
   return (
     <>
@@ -292,35 +318,37 @@ const SendToAllSection = () => {
             <Icon name="satellite-dish" mr={1} ml={0.5} />
             Send To All
           </Stack.Item>
-          <Stack.Item>
-            <Button
-              tooltip={
-                selected_photo_path ? 'View photo' : 'Scan photo in hand'
-              }
-              icon={selected_photo_path ? 'image' : 'upload'}
-              onClick={
-                selected_photo_path
-                  ? () => setPreviewingPhoto(true)
-                  : () => act('PDA_uploadPhoto')
-              }
-            />
-          </Stack.Item>
-          <Stack.Item>
-            <Button
-              icon="arrow-right"
-              disabled={on_spam_cooldown || message === ''}
-              tooltip={
-                !!on_spam_cooldown && 'Wait before sending more messages!'
-              }
-              tooltipPosition="auto-start"
-              onClick={() => {
-                act('PDA_sendEveryone', { message: message });
-                setmessage('');
-              }}
-            >
-              Send
-            </Button>
-          </Stack.Item>
+          <Stack>
+            <Stack.Item>
+              <Button
+                tooltip={
+                  selected_photo_path ? 'View photo' : 'Scan photo in hand'
+                }
+                icon={selected_photo_path ? 'image' : 'upload'}
+                onClick={
+                  selected_photo_path
+                    ? () => props.onPreview()
+                    : () => act('PDA_uploadPhoto')
+                }
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <Button
+                icon="arrow-right"
+                disabled={on_spam_cooldown || message === ''}
+                tooltip={
+                  !!on_spam_cooldown && 'Wait before sending more messages!'
+                }
+                tooltipPosition="auto-start"
+                onClick={() => {
+                  act('PDA_sendEveryone', { message: message });
+                  setmessage('');
+                }}
+              >
+                Send
+              </Button>
+            </Stack.Item>
+          </Stack>
         </Stack>
       </Section>
       <Section>
@@ -331,31 +359,6 @@ const SendToAllSection = () => {
           onChange={(_, value: string) => setmessage(value)}
         />
       </Section>
-      {selected_photo_path && previewingPhoto && (
-        <PhotoPreview
-          img={selected_photo_path}
-          buttons={
-            <>
-              <Button
-                color="red"
-                icon="xmark"
-                onClick={() => {
-                  setPreviewingPhoto(false);
-                  act('PDA_clearPhoto');
-                }}
-              >
-                Clear Photo
-              </Button>
-              <Button
-                icon="arrow-left"
-                onClick={() => setPreviewingPhoto(false)}
-              >
-                Back
-              </Button>
-            </>
-          }
-        />
-      )}
     </>
   );
 };
