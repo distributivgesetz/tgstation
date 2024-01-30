@@ -20,6 +20,7 @@ type ChatScreenProps = {
   canReply: boolean;
   chatId?: string;
   messages: NtMessage[];
+  messageDraft: string;
   recipient: NtMessenger;
   selectedPhoto: string | null;
   sendingVirus: boolean;
@@ -36,12 +37,13 @@ export const ChatScreen = (props: ChatScreenProps) => {
     messages,
     recipient,
     chatId,
+    messageDraft,
     selectedPhoto,
     sendingVirus,
     unreads,
   } = props;
 
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(messageDraft);
   const [canSend, setCanSend] = useState(true);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 

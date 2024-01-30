@@ -55,6 +55,7 @@ export const NtosMessenger = () => {
         sendingVirus={!!sending_virus}
         canReply={!!(openChat?.can_reply ?? temporaryRecipient)}
         messages={openChat?.messages ?? []}
+        messageDraft={openChat?.message_draft ?? ''}
         recipient={openChat?.recipient ?? temporaryRecipient}
         unreads={openChat?.unread_messages ?? 0}
         chatId={openChat?.ref}
