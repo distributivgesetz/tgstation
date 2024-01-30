@@ -214,9 +214,7 @@ export const ChatScreen = (props: ChatScreenProps) => {
                   />
                 ) : (
                   <Button
-                    tooltip={
-                      selectedPhoto ? 'View photo' : 'Scan photo in hand'
-                    }
+                    tooltip={selectedPhoto ? 'View photo' : 'Scan photo'}
                     icon={selectedPhoto ? 'image' : 'upload'}
                     onClick={
                       selectedPhoto

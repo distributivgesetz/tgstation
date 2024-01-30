@@ -321,9 +321,7 @@ const SendToAllSection = (props: { onPreview: () => void }) => {
           <Stack>
             <Stack.Item>
               <Button
-                tooltip={
-                  selected_photo_path ? 'View photo' : 'Scan photo in hand'
-                }
+                tooltip={selected_photo_path ? 'View photo' : 'Scan photo'}
                 icon={selected_photo_path ? 'image' : 'upload'}
                 onClick={
                   selected_photo_path
