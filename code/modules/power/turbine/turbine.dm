@@ -671,7 +671,7 @@
 	rpm = FLOOR(min(rpm, max_allowed_rpm), 1)
 	//add energy into the grid, also use part of it for turbine operation
 	produced_energy = rpm * TURBINE_ENERGY_RECTIFICATION_MULTIPLIER * TURBINE_RPM_CONVERSION
-	add_avail(produced_energy)
+	add_avail(produced_energy * INVERSE(SSair.wait / 10)) // should be a proper SPT
 
 /obj/item/paper/guides/jobs/atmos/turbine
 	name = "paper- 'Quick guide on the new and improved turbine!'"
