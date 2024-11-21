@@ -23,8 +23,8 @@
  * - force_immutable: Effectively hides the state machine from varedits. Set this to true if you use this state machine somewhere important.
  */
 /datum/finite_automaton/New(automaton_structure, first_state = null)
-	if(!islist(automaton_structure) || length(automaton_structure) < 2)
-		CRASH("Invalid automaton structure")
+	ASSERT(islist(automaton_structure))
+	ASSERT(length(automaton_structure) >= 2)
 
 	states = automaton_structure[AUTOMATON_STATES]
 	transitions = automaton_structure[AUTOMATON_TRANSITIONS]
@@ -56,8 +56,7 @@
 
 /// Forces the automaton to take on the current state. Only for the brave.
 /datum/finite_automaton/force_state(state)
-	if(!(state in states))
-		CRASH("State \"[state]\" is not a valid state")
+	ASSERT(state in states)
 	current_state = state
 
 #undef AUTOMATON_STATES
