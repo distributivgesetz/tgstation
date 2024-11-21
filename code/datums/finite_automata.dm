@@ -11,8 +11,8 @@
 	VAR_PRIVATE/list/states
 	/// List of valid transitions. Format: list[state, list[symbol, state]]
 	VAR_PRIVATE/list/transitions
-	/// List of accepting states. Has to be a subset of states.
-	VAR_PRIVATE/list/accepting_states
+	/// List of accepting states. Has to be a subset of states. Can be null.
+	VAR_PRIVATE/list/accepting_states = null
 	/// The current state of this DFA. Contained in states.
 	VAR_PRIVATE/current_state = null
 
@@ -23,12 +23,13 @@
  * - force_immutable: Effectively hides the state machine from varedits. Set this to true if you use this state machine somewhere important.
  */
 /datum/finite_automaton/New(automaton_structure, first_state = null)
-	if(!islist(automaton_structure))
-		CRASH("Invalid automaton_structure")
+	if(!islist(automaton_structure) || length(automaton_structure) < 2)
+		CRASH("Invalid automaton structure")
 
 	states = automaton_structure[AUTOMATON_STATES]
 	transitions = automaton_structure[AUTOMATON_TRANSITIONS]
-	accepting_states = automaton_structure[AUTOMATON_ACCEPTING_STATES]
+	if(length(automaton_structure) >= 3)
+		accepting_states = automaton_structure[AUTOMATON_ACCEPTING_STATES]
 
 	current_state = first_state || states[1]
 
