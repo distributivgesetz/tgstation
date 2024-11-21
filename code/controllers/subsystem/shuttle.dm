@@ -5,6 +5,18 @@
 /// If we're under load we want to allow for cycling, but if not we want to preserve already generated docks for use
 #define SOFT_TRANSIT_RESERVATION_THRESHOLD (100 ** 2)
 
+GLOBAL_LIST_INIT(shuttle_state_definition, list(
+		list(SHUTTLE_IDLE, SHUTTLE_IGNITING, SHUTTLE_CALL, SHUTTLE_RECHARGING),
+		list(
+			SHUTTLE_IDLE = list(SHUTTLE_IGNITING),
+			SHUTTLE_IGNITING = list(SHUTTLE_CALL, SHUTTLE_IDLE),
+			SHUTTLE_CALL = list(SHUTTLE_RECHARGING),
+			SHUTTLE_RECHARGING = list(SHUTTLE_IDLE)
+		)
+	))
+
+/proc/define_shuttle_states()
+	return
 
 SUBSYSTEM_DEF(shuttle)
 	name = "Shuttle"
