@@ -18,7 +18,7 @@
 
 /**
  * Constructs a new finite automaton from the given structure.
- * - automaton_structure: A two dimensional list of states and a list of transitions
+ * - automaton_structure: A two dimensional list of states and a list of transitions. If a transition symbol has no associated state then the symbol will be assumed as the state.
  * - first_state: The first state that should be assumed. Default will be the first state in the state list.
  * - force_immutable: Effectively hides the state machine from varedits. Set this to true if you use this state machine somewhere important.
  */
@@ -38,11 +38,16 @@
 
 /// Executes a transition if it exists. Returns the state on success.
 /datum/finite_automaton/try_transition(symbol)
+	if(!can_transition(symbol))
+		return null
 	var/next_state = transitions[current_state][symbol]
 	if(!next_state)
-		return null
+		next_state = symbol
+		if(!(next_state in states))
+			stack_trace("Transition symbol \"[symbol]\" does not have a next state and isn't a state itself")
+			return null
 	current_state = next_state
-	return current_state
+	return next_state
 
 /// Returns whether the automaton is currently accepting.
 /datum/finite_automaton/currently_accepting()
@@ -51,7 +56,7 @@
 /// Forces the automaton to take on the current state. Only for the brave.
 /datum/finite_automaton/force_state(state)
 	if(!(state in states))
-		CRASH("State [state] is not in accepting states")
+		CRASH("State \"[state]\" is not a valid state")
 	current_state = state
 
 #undef AUTOMATON_STATES
