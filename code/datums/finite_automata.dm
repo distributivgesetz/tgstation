@@ -13,8 +13,8 @@
 	VAR_PRIVATE/list/transitions
 	/// List of accepting states. Has to be a subset of states. Can be null.
 	VAR_PRIVATE/list/accepting_states = null
-	/// The current state of this DFA. Contained in states.
-	VAR_PRIVATE/current_state = null
+	/// The current state of this DFA. Contained in states. Modifying directly only reserved for the brave.
+	var/current_state = null
 
 /**
  * Constructs a new finite automaton from the given structure.
@@ -53,11 +53,6 @@
 /// Returns whether the automaton is currently accepting.
 /datum/finite_automaton/currently_accepting()
 	return (current_state in accepting_states)
-
-/// Forces the automaton to take on the current state. Only for the brave.
-/datum/finite_automaton/force_state(state)
-	ASSERT(state in states)
-	current_state = state
 
 #undef AUTOMATON_STATES
 #undef AUTOMATON_TRANSITIONS
