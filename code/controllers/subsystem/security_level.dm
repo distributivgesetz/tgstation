@@ -54,7 +54,7 @@ SUBSYSTEM_DEF(security_level)
 	else
 		can_fire = FALSE
 
-	if(SSshuttle.emergency.mode == SHUTTLE_CALL || SSshuttle.emergency.mode == SHUTTLE_RECALL) // By god this is absolutely shit
+	if(SSshuttle.emergency.mode == SHUTTLE_STATE_CALL || SSshuttle.emergency.mode == SHUTTLE_STATE_RECALL) // By god this is absolutely shit
 		SSshuttle.emergency.alert_coeff_change(selected_level.shuttle_call_time_mod)
 
 	SEND_SIGNAL(src, COMSIG_SECURITY_LEVEL_CHANGED, selected_level.number_level)

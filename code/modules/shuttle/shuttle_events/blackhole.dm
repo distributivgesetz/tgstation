@@ -53,7 +53,7 @@
 	if(!.)
 		return
 
-	if((SSshuttle.emergency.mode == SHUTTLE_ESCAPE)) // only while shuttle is in transit
+	if((SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE)) // only while shuttle is in transit
 		if(beacon && beacon.active)
 			var/area/escape_shuttle_area = get_area(beacon)
 			if(istype(escape_shuttle_area, /area/shuttle/escape) && SSshuttle.emergency.is_in_shuttle_bounds(beacon))

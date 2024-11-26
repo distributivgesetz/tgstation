@@ -58,9 +58,9 @@
 	. = ..()
 
 	if(perma_docked)
-		if(mode != SHUTTLE_CALL)
+		if(mode != SHUTTLE_STATE_CALL)
 			sound_played = FALSE
-			mode = SHUTTLE_IDLE
+			mode = SHUTTLE_STATE_IDLE
 		else
 			SendToStation()
 		return
@@ -82,20 +82,20 @@
 			var/obj/machinery/announcement_system/announcer = pick(GLOB.announcement_systems)
 			if(!QDELETED(announcer))
 				announcer.announce("ARRIVALS_BROKEN", channels = list())
-		if(mode != SHUTTLE_CALL)
+		if(mode != SHUTTLE_STATE_CALL)
 			sound_played = FALSE
-			mode = SHUTTLE_IDLE
+			mode = SHUTTLE_STATE_IDLE
 		else
 			SendToStation()
 		return
 
 	var/found_awake = PersonCheck() || NukeDiskCheck()
-	if(mode == SHUTTLE_CALL)
+	if(mode == SHUTTLE_STATE_CALL)
 		if(found_awake)
 			SendToStation()
-	else if(mode == SHUTTLE_IGNITING)
+	else if(mode == SHUTTLE_STATE_IGNITING)
 		if(found_awake && !force_depart)
-			mode = SHUTTLE_IDLE
+			mode = SHUTTLE_STATE_IDLE
 			sound_played = FALSE
 		else if(!sound_played)
 			hyperspace_sound(HYPERSPACE_WARMUP, areas)
@@ -125,7 +125,7 @@
 
 /obj/docking_port/mobile/arrivals/proc/SendToStation()
 	var/dockTime = CONFIG_GET(number/arrivals_shuttle_dock_window)
-	if(mode == SHUTTLE_CALL && timeLeft(1) > dockTime)
+	if(mode == SHUTTLE_STATE_CALL && timeLeft(1) > dockTime)
 		if(console)
 			console.say(damaged ? "Initiating emergency docking for repairs!" : "Now approaching: [station_name()].")
 		hyperspace_sound(HYPERSPACE_LAUNCH, areas) //for the new guy
@@ -142,7 +142,7 @@
 			else if(NukeDiskCheck())
 				cancel_reason = "critical station device detected on board"
 			if(cancel_reason)
-				mode = SHUTTLE_IDLE
+				mode = SHUTTLE_STATE_IDLE
 				if(console)
 					console.say("Launch cancelled, [cancel_reason].")
 				return
@@ -158,7 +158,7 @@
 
 /obj/docking_port/mobile/arrivals/check_effects()
 	..()
-	if(mode == SHUTTLE_CALL && !sound_played && timeLeft(1) <= HYPERSPACE_END_TIME)
+	if(mode == SHUTTLE_STATE_CALL && !sound_played && timeLeft(1) <= HYPERSPACE_END_TIME)
 		sound_played = TRUE
 		hyperspace_sound(HYPERSPACE_END, areas)
 
@@ -170,7 +170,7 @@
 /obj/docking_port/mobile/arrivals/proc/Launch(pickingup)
 	if(pickingup)
 		force_depart = TRUE
-	if(mode == SHUTTLE_IDLE)
+	if(mode == SHUTTLE_STATE_IDLE)
 		if(console)
 			console.say(pickingup ? "Departing immediately for new employee pickup." : "Shuttle departing.")
 		var/obj/docking_port/stationary/target = target_dock
@@ -179,13 +179,13 @@
 		request(target) //we will intentionally never return SHUTTLE_ALREADY_DOCKED
 
 /obj/docking_port/mobile/arrivals/proc/RequireUndocked(mob/user)
-	if(mode == SHUTTLE_CALL || damaged)
+	if(mode == SHUTTLE_STATE_CALL || damaged)
 		return
 
 	Launch(TRUE)
 
 	to_chat(user, span_notice("Calling your shuttle. One moment..."))
-	while(mode != SHUTTLE_CALL && !damaged)
+	while(mode != SHUTTLE_STATE_CALL && !damaged)
 		stoplag()
 
 /**
@@ -196,7 +196,7 @@
  * * rank - The job of the arriving mob.
  */
 /obj/docking_port/mobile/arrivals/proc/QueueAnnounce(mob, rank)
-	if(mode != SHUTTLE_CALL)
+	if(mode != SHUTTLE_STATE_CALL)
 		announce_arrival(mob, rank)
 	else
 		LAZYADD(queued_announces, CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(announce_arrival), mob, rank))

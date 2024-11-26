@@ -222,11 +222,11 @@
 /datum/team/nuclear/proc/is_disk_rescued()
 	for(var/obj/item/disk/nuclear/nuke_disk in SSpoints_of_interest.real_nuclear_disks)
 		//If emergency shuttle is in transit disk is only safe on it
-		if(SSshuttle.emergency.mode == SHUTTLE_ESCAPE)
+		if(SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE)
 			if(!SSshuttle.emergency.is_in_shuttle_bounds(nuke_disk))
 				return FALSE
 		//If shuttle escaped check if it's on centcom side
-		else if(SSshuttle.emergency.mode == SHUTTLE_ENDGAME)
+		else if(SSshuttle.emergency.mode == SHUTTLE_STATE_ENDGAME)
 			if(!nuke_disk.onCentCom())
 				return FALSE
 		else //Otherwise disk is safe when on station

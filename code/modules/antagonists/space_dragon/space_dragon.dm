@@ -130,7 +130,7 @@
  *
  */
 /datum/antagonist/space_dragon/proc/rift_checks()
-	if((rifts_charged == 3 || (SSshuttle.emergency.mode == SHUTTLE_DOCKED && rifts_charged > 0)) && !objective_complete)
+	if((rifts_charged == 3 || (SSshuttle.emergency.mode == SHUTTLE_STATE_DOCKED && rifts_charged > 0)) && !objective_complete)
 		victory()
 		return
 	if(riftTimer == -1)

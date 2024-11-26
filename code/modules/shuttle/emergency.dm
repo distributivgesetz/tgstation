@@ -1,7 +1,7 @@
 #define TIME_LEFT (SSshuttle.emergency.timeLeft())
 #define ENGINES_START_TIME 100
-#define ENGINES_STARTED (SSshuttle.emergency.mode == SHUTTLE_IGNITING)
-#define IS_DOCKED (SSshuttle.emergency.mode == SHUTTLE_DOCKED || (ENGINES_STARTED))
+#define ENGINES_STARTED (SSshuttle.emergency.mode == SHUTTLE_STATE_IGNITING)
+#define IS_DOCKED (SSshuttle.emergency.mode == SHUTTLE_STATE_DOCKED || (ENGINES_STARTED))
 #define SHUTTLE_CONSOLE_ACTION_DELAY (5 SECONDS)
 
 #define NOT_BEGUN 0
@@ -83,7 +83,7 @@
 		return
 	if(!IS_DOCKED) // shuttle computer only has uses when onstation
 		return
-	if(SSshuttle.emergency.mode == SHUTTLE_DISABLED) // admins have disabled the shuttle.
+	if(SSshuttle.emergency.mode == SHUTTLE_STATE_DISABLED) // admins have disabled the shuttle.
 		return
 	if(!isliving(usr))
 		return
@@ -194,7 +194,7 @@
 		announce_hijack_stage()
 	hijack_last_stage_increase = world.time
 	say("Navigational protocol error! Rebooting systems.")
-	if(shuttle.mode == SHUTTLE_ESCAPE)
+	if(shuttle.mode == SHUTTLE_STATE_ESCAPE)
 		if(shuttle.hijack_status == HIJACKED)
 			shuttle.setTimer(hijack_completion_flight_time_set)
 		else
@@ -270,7 +270,7 @@
 			msg = "SYSTEM OVERRIDE - Resetting course to \[[scramble_message_replace_chars("###########", 100)]\] \
 			([scramble_message_replace_chars("#######", 100)]/[scramble_message_replace_chars("#######", 100)]/[scramble_message_replace_chars("#######", 100)]) \
 			{AUTH - ROOT (uid: 0)}.</font>\
-			[SSshuttle.emergency.mode == SHUTTLE_ESCAPE ? "Diverting from existing route - Bluespace exit in \
+			[SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE ? "Diverting from existing route - Bluespace exit in \
 			[hijack_completion_flight_time_set >= INFINITY ? "[scramble_message_replace_chars("\[ERROR\]")]" : hijack_completion_flight_time_set/10] seconds." : ""]"
 	minor_announce(scramble_message_replace_chars(msg, replaceprob = 10), "Emergency Shuttle", TRUE)
 
@@ -355,8 +355,8 @@
 	switch(mode)
 		// The shuttle can not normally be called while "recalling", so
 		// if this proc is called, it's via admin fiat
-		if(SHUTTLE_RECALL, SHUTTLE_IDLE, SHUTTLE_CALL)
-			mode = SHUTTLE_CALL
+		if(SHUTTLE_STATE_RECALL, SHUTTLE_STATE_IDLE, SHUTTLE_STATE_CALL)
+			mode = SHUTTLE_STATE_CALL
 			setTimer(call_time)
 		else
 			return
@@ -377,13 +377,13 @@
 		)
 
 /obj/docking_port/mobile/emergency/cancel(area/signalOrigin)
-	if(mode != SHUTTLE_CALL)
+	if(mode != SHUTTLE_STATE_CALL)
 		return
 	if(SSshuttle.emergency_no_recall)
 		return
 
 	invertTimer()
-	mode = SHUTTLE_RECALL
+	mode = SHUTTLE_STATE_RECALL
 
 	if(prob(70))
 		SSshuttle.emergency_last_call_loc = signalOrigin
@@ -462,26 +462,26 @@
 
 	// The emergency shuttle doesn't work like others so this
 	// ripple check is slightly different
-	if(!ripples.len && (time_left <= SHUTTLE_RIPPLE_TIME) && ((mode == SHUTTLE_CALL) || (mode == SHUTTLE_ESCAPE)))
+	if(!ripples.len && (time_left <= SHUTTLE_RIPPLE_TIME) && ((mode == SHUTTLE_STATE_CALL) || (mode == SHUTTLE_STATE_ESCAPE)))
 		var/destination
-		if(mode == SHUTTLE_CALL)
+		if(mode == SHUTTLE_STATE_CALL)
 			destination = SSshuttle.getDock("emergency_home")
-		else if(mode == SHUTTLE_ESCAPE)
+		else if(mode == SHUTTLE_STATE_ESCAPE)
 			destination = SSshuttle.getDock("emergency_away")
 		create_ripples(destination)
 
 	switch(mode)
-		if(SHUTTLE_RECALL)
+		if(SHUTTLE_STATE_RECALL)
 			if(time_left <= 0)
-				mode = SHUTTLE_IDLE
+				mode = SHUTTLE_STATE_IDLE
 				timer = 0
-		if(SHUTTLE_CALL)
+		if(SHUTTLE_STATE_CALL)
 			if(time_left <= 0)
 				//move emergency shuttle to station
 				if(initiate_docking(SSshuttle.getDock("emergency_home")) != DOCKING_SUCCESS)
 					setTimer(20)
 					return
-				mode = SHUTTLE_DOCKED
+				mode = SHUTTLE_STATE_DOCKED
 				setTimer(SSshuttle.emergency_dock_time)
 				send2adminchat("Server", "The Emergency Shuttle has docked with the station.")
 				priority_announce(
@@ -495,9 +495,9 @@
 				addtimer(CALLBACK(src, PROC_REF(announce_shuttle_events)), 20 SECONDS)
 
 
-		if(SHUTTLE_DOCKED)
+		if(SHUTTLE_STATE_DOCKED)
 			if(time_left <= ENGINES_START_TIME)
-				mode = SHUTTLE_IGNITING
+				mode = SHUTTLE_STATE_IGNITING
 				SSshuttle.checkHostileEnvironment()
 				if(mode == SHUTTLE_STRANDED)
 					return
@@ -506,7 +506,7 @@
 					if(M.launch_status == UNLAUNCHED) //Pods will not launch from the mine/planet, and other ships won't launch unless we tell them to.
 						M.check_transit_zone()
 
-		if(SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IGNITING)
 			var/success = TRUE
 			SSshuttle.checkHostileEnvironment()
 			if(mode == SHUTTLE_STRANDED)
@@ -544,7 +544,7 @@
 				for(var/datum/shuttle_event/event as anything in event_list)
 					event.start_up_event(SSshuttle.emergency_escape_time * engine_coeff)
 
-				mode = SHUTTLE_ESCAPE
+				mode = SHUTTLE_STATE_ESCAPE
 				launch_status = ENDGAME_LAUNCHED
 				setTimer(SSshuttle.emergency_escape_time * engine_coeff)
 				priority_announce(
@@ -559,11 +559,11 @@
 				if(!is_reserved_level(z))
 					CRASH("Emergency shuttle did not move to transit z-level!")
 
-		if(SHUTTLE_STRANDED, SHUTTLE_DISABLED)
+		if(SHUTTLE_STRANDED, SHUTTLE_STATE_DISABLED)
 			SSshuttle.checkHostileEnvironment()
 
 
-		if(SHUTTLE_ESCAPE)
+		if(SHUTTLE_STATE_ESCAPE)
 			if(sound_played && time_left <= HYPERSPACE_END_TIME)
 				var/list/areas = list()
 				for(var/area/shuttle/escape/E in GLOB.areas)
@@ -603,14 +603,14 @@
 						supervisor.", "SYSTEM ERROR:", sound_override = 'sound/announcer/announcement/announce_syndi.ogg')
 
 				dock_id(destination_dock)
-				mode = SHUTTLE_ENDGAME
+				mode = SHUTTLE_STATE_ENDGAME
 				timer = 0
 
 /obj/docking_port/mobile/emergency/transit_failure()
 	..()
 	message_admins("Moving emergency shuttle directly to centcom dock to prevent deadlock.")
 
-	mode = SHUTTLE_ESCAPE
+	mode = SHUTTLE_STATE_ESCAPE
 	launch_status = ENDGAME_LAUNCHED
 	setTimer(SSshuttle.emergency_escape_time)
 	priority_announce(
@@ -638,7 +638,7 @@
 /obj/docking_port/mobile/monastery/on_emergency_dock()
 	if(launch_status == ENDGAME_LAUNCHED)
 		initiate_docking(SSshuttle.getDock("pod_away")) //docks our shuttle as any pod would
-		mode = SHUTTLE_ENDGAME
+		mode = SHUTTLE_STATE_ENDGAME
 
 /obj/docking_port/mobile/pod
 	name = "escape pod"

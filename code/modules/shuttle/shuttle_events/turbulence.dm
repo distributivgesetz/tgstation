@@ -39,7 +39,7 @@
 
 /// Knock them down
 /datum/shuttle_event/turbulence/proc/knock_down()
-	if (SSshuttle.emergency.mode != SHUTTLE_ESCAPE)
+	if (SSshuttle.emergency.mode != SHUTTLE_STATE_ESCAPE)
 		return // They docked
 	var/list/mobs = mobs_in_area_type(list(/area/shuttle/escape)) // Not very efficient but check again in case someone was outdoors
 	for(var/mob/living/mob as anything in mobs)

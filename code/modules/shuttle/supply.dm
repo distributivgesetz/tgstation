@@ -90,7 +90,7 @@ GLOBAL_LIST_INIT(blacklisted_cargo_types, typecacheof(list(
 	return stuff_to_send_home
 
 /obj/docking_port/mobile/supply/request(obj/docking_port/stationary/S)
-	if(mode != SHUTTLE_IDLE)
+	if(mode != SHUTTLE_STATE_IDLE)
 		return 2
 	return ..()
 

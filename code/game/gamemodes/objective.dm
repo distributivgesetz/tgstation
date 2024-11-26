@@ -81,7 +81,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	if(SSticker.force_ending || GLOB.station_was_nuked)
 		return TRUE
 	// Escape hasn't happened yet
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return FALSE
 	var/area/current_area = get_area(escapee.current)
 	// In custody (shuttle brig) does not count as escaping
@@ -414,7 +414,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	var/hijack_speed_override = 1
 
 /datum/objective/hijack/check_completion() // Requires all owners to escape.
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return FALSE
 	var/list/datum/mind/owners = get_owners()
 	for(var/datum/mind/M in owners)
@@ -429,7 +429,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	martyr_compatible = FALSE
 
 /datum/objective/elimination/check_completion()
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return FALSE
 	var/list/datum/mind/owners = get_owners()
 	for(var/datum/mind/M in owners)
@@ -442,7 +442,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	explanation_text = "Escape on the shuttle alone. Ensure that nobody else makes it out."
 
 /datum/objective/elimination/highlander/check_completion()
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return FALSE
 	var/list/datum/mind/owners = get_owners()
 	for(var/datum/mind/M in owners)
@@ -456,7 +456,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	martyr_compatible = 1
 
 /datum/objective/block/check_completion()
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return TRUE
 	for(var/mob/living/player in GLOB.player_list)
 		if(player.mind && player.stat != DEAD && (player.mob_biotypes & MOB_ORGANIC))
@@ -470,7 +470,7 @@ GLOBAL_LIST(admin_objective_list) //Prefilled admin assignable objective list
 	martyr_compatible = TRUE
 
 /datum/objective/purge/check_completion()
-	if(SSshuttle.emergency.mode != SHUTTLE_ENDGAME)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ENDGAME)
 		return TRUE
 	for(var/mob/living/player in GLOB.player_list)
 		if((get_area(player) in SSshuttle.emergency.shuttle_areas) && player.mind && player.stat != DEAD && ishuman(player))

@@ -233,9 +233,9 @@
 	if(CONFIG_GET(flag/allow_latejoin_antagonists) && humanc) //Borgs aren't allowed to be antags. Will need to be tweaked if we get true latejoin ais.
 		if(SSshuttle.emergency)
 			switch(SSshuttle.emergency.mode)
-				if(SHUTTLE_RECALL, SHUTTLE_IDLE)
+				if(SHUTTLE_STATE_RECALL, SHUTTLE_STATE_IDLE)
 					SSdynamic.make_antag_chance(humanc)
-				if(SHUTTLE_CALL)
+				if(SHUTTLE_STATE_CALL)
 					if(SSshuttle.emergency.timeLeft(1) > initial(SSshuttle.emergency_call_time)*0.5)
 						SSdynamic.make_antag_chance(humanc)
 

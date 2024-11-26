@@ -5,18 +5,70 @@
 /// If we're under load we want to allow for cycling, but if not we want to preserve already generated docks for use
 #define SOFT_TRANSIT_RESERVATION_THRESHOLD (100 ** 2)
 
+/// State graph for default shuttles
 GLOBAL_LIST_INIT(shuttle_state_definition, list(
-		list(SHUTTLE_IDLE, SHUTTLE_IGNITING, SHUTTLE_CALL, SHUTTLE_RECHARGING),
+		list(SHUTTLE_STATE_IDLE, SHUTTLE_STATE_IGNITING, SHUTTLE_STATE_CALL, SHUTTLE_STATE_PREARRIVAL, SHUTTLE_STATE_RECHARGING),
 		list(
-			SHUTTLE_IDLE = list(SHUTTLE_IGNITING),
-			SHUTTLE_IGNITING = list(SHUTTLE_CALL, SHUTTLE_IDLE),
-			SHUTTLE_CALL = list(SHUTTLE_RECHARGING),
-			SHUTTLE_RECHARGING = list(SHUTTLE_IDLE)
+			SHUTTLE_STATE_IDLE = list(SHUTTLE_STATE_IGNITING),
+			SHUTTLE_STATE_IGNITING = list(SHUTTLE_STATE_CALL, SHUTTLE_STATE_IDLE),
+			SHUTTLE_STATE_CALL = list(SHUTTLE_STATE_PREARRIVAL),
+			SHUTTLE_STATE_PREARRIVAL = list(SHUTTLE_STATE_RECHARGING),
+			SHUTTLE_STATE_RECHARGING = list(SHUTTLE_STATE_IDLE)
 		)
 	))
 
-/proc/define_shuttle_states()
-	return
+GLOBAL_LIST_INIT(emergency_shuttle_state_definition, init_emergency_shuttle_state_graph())
+
+/proc/init_emergency_shuttle_state_graph()
+	var/list/states = list(
+			SHUTTLE_STATE_RECHARGING,
+			SHUTTLE_STATE_IDLE,
+			SHUTTLE_STATE_DISABLED,
+			SHUTTLE_STATE_CALL,
+			SHUTTLE_STATE_CALL_PONR,
+			SHUTTLE_STATE_RECALL,
+			SHUTTLE_STATE_DOCKED,
+			SHUTTLE_STATE_HOSTILE_ENV,
+			SHUTTLE_STATE_IGNITING,
+			SHUTTLE_STATE_ESCAPE,
+			SHUTTLE_STATE_ENDGAME,
+		)
+
+	var/list/transitions = list(
+			SHUTTLE_STATE_RECHARGING = list(SHUTTLE_STATE_IDLE),
+			SHUTTLE_STATE_IDLE = list(SHUTTLE_STATE_CALL, SHUTTLE_STATE_CALL_PONR, SHUTTLE_STATE_DISABLED),
+			SHUTTLE_STATE_DISABLED = list(SHUTTLE_STATE_IDLE),
+			SHUTTLE_STATE_CALL = list(SHUTTLE_STATE_CALL_PONR, SHUTTLE_STATE_RECALL),
+			SHUTTLE_STATE_CALL_PONR = list(SHUTTLE_STATE_DOCKED, SHUTTLE_STATE_RECALL),
+			SHUTTLE_STATE_RECALL = list(SHUTTLE_STATE_IDLE),
+			SHUTTLE_STATE_DOCKED = list(SHUTTLE_STATE_HOSTILE_ENV, SHUTTLE_STATE_IGNITING),
+			SHUTTLE_STATE_HOSTILE_ENV = list(SHUTTLE_STATE_DOCKED),
+			SHUTTLE_STATE_IGNITING = list(SHUTTLE_STATE_ESCAPE),
+			SHUTTLE_STATE_ESCAPE = list(SHUTTLE_STATE_ENDGAME),
+			SHUTTLE_STATE_ENDGAME = list()
+		)
+
+	var/list/stranded_disallowed = list(SHUTTLE_STATE_ENDGAME)
+
+	// i fufkcing lvo overengineering my code
+	var/list/stranded_states = list()
+	var/list/stranded_transitions = list()
+
+	// add a special stranded state for every possible state, except for stranded_disallowed states
+	for(var/transition_key in transitions)
+		if(transition_key in stranded_disallowed)
+			continue
+		var/list/current_key_transitions = transitions[transition_key]
+
+		// generate unique stranded state name
+		var/stranded_state = SHUTTLE_STATE_STRANDED_FROM(transition_key)
+		states += stranded_state
+		// add a transition to our stranded state
+		current_key_transitions += list(SHUTTLE_TRANSITION_STRAND = stranded_state)
+		// create a transition out of the stranded state and add it to our transition list
+		transitions += list(stranded_state = list(SHUTTLE_TRANSITION_UNSTRAND = transition_key))
+
+	return list(states, transitions)
 
 SUBSYSTEM_DEF(shuttle)
 	name = "Shuttle"
@@ -73,7 +125,7 @@ SUBSYSTEM_DEF(shuttle)
 	/// Did admins force-prevent the recall of the shuttle?
 	var/admin_emergency_no_recall = FALSE
 	/// Previous mode of the shuttle before it was forcefully disabled by admins.
-	var/last_mode = SHUTTLE_IDLE
+	var/last_mode = SHUTTLE_STATE_IDLE
 	/// Previous time left to the call, only useful for disabling and re-enabling the shuttle for admins so it doesn't have to start the whole timer again.
 	var/last_call_time = 10 MINUTES
 
@@ -229,7 +281,7 @@ SUBSYSTEM_DEF(shuttle)
 			continue
 		var/obj/docking_port/mobile/owner = T.owner
 		if(owner)
-			var/idle = owner.mode == SHUTTLE_IDLE
+			var/idle = owner.mode == SHUTTLE_STATE_IDLE
 			var/not_centcom_evac = owner.launch_status == NOLAUNCH
 			var/not_in_use = (!T.get_docked())
 			if(idle && not_centcom_evac && not_in_use)
@@ -334,15 +386,15 @@ SUBSYSTEM_DEF(shuttle)
 		return "The emergency shuttle is refueling. Please wait [DisplayTimeText(shuttle_refuel_delay - (world.time - SSticker.round_start_time))] before attempting to call."
 
 	switch(emergency.mode)
-		if(SHUTTLE_RECALL)
+		if(SHUTTLE_STATE_RECALL)
 			return "The emergency shuttle may not be called while returning to CentCom."
-		if(SHUTTLE_CALL)
+		if(SHUTTLE_STATE_CALL)
 			return "The emergency shuttle is already on its way."
-		if(SHUTTLE_DOCKED)
+		if(SHUTTLE_STATE_DOCKED)
 			return "The emergency shuttle is already here."
-		if(SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IGNITING)
 			return "The emergency shuttle is firing its engines to leave."
-		if(SHUTTLE_ESCAPE)
+		if(SHUTTLE_STATE_ESCAPE)
 			return "The emergency shuttle is moving away to a safe distance."
 		if(SHUTTLE_STRANDED)
 			return "The emergency shuttle has been disabled by CentCom."
@@ -417,7 +469,7 @@ SUBSYSTEM_DEF(shuttle)
 		frequency.post_signal(src, status_signal)
 
 /datum/controller/subsystem/shuttle/proc/centcom_recall(old_timer, admiral_message)
-	if(emergency.mode != SHUTTLE_CALL || emergency.timer != old_timer)
+	if(emergency.mode != SHUTTLE_STATE_CALL || emergency.timer != old_timer)
 		return
 	emergency.cancel()
 
@@ -452,7 +504,7 @@ SUBSYSTEM_DEF(shuttle)
 		return 1
 
 /datum/controller/subsystem/shuttle/proc/canRecall()
-	if(!emergency || emergency.mode != SHUTTLE_CALL || admin_emergency_no_recall || emergency_no_recall)
+	if(!emergency || emergency.mode != SHUTTLE_STATE_CALL || admin_emergency_no_recall || emergency_no_recall)
 		return
 	var/security_num = SSsecurity_level.get_current_level_as_number()
 	switch(security_num)
@@ -520,12 +572,12 @@ SUBSYSTEM_DEF(shuttle)
 			trade_blockade -= d
 	supply_blocked = trade_blockade.len
 
-	if(supply_blocked && (supply.mode == SHUTTLE_IGNITING))
+	if(supply_blocked && (supply.mode == SHUTTLE_STATE_IGNITING))
 		supply.mode = SHUTTLE_STRANDED
 		supply.timer = null
 		//Make all cargo consoles speak up
 	if(!supply_blocked && (supply.mode == SHUTTLE_STRANDED))
-		supply.mode = SHUTTLE_DOCKED
+		supply.mode = SHUTTLE_STATE_DOCKED
 		//Make all cargo consoles speak up
 
 /datum/controller/subsystem/shuttle/proc/checkHostileEnvironment()
@@ -534,7 +586,7 @@ SUBSYSTEM_DEF(shuttle)
 			hostile_environments -= hostile_environment_source
 	emergency_no_escape = hostile_environments.len
 
-	if(emergency_no_escape && (emergency.mode == SHUTTLE_IGNITING))
+	if(emergency_no_escape && (emergency.mode == SHUTTLE_STATE_IGNITING))
 		emergency.mode = SHUTTLE_STRANDED
 		emergency.timer = null
 		emergency.sound_played = FALSE
@@ -545,8 +597,8 @@ SUBSYSTEM_DEF(shuttle)
 			sender_override = "Emergency Shuttle Uplink Alert",
 			color_override = "grey",
 		)
-	if(!emergency_no_escape && (emergency.mode == SHUTTLE_STRANDED || emergency.mode == SHUTTLE_DOCKED))
-		emergency.mode = SHUTTLE_DOCKED
+	if(!emergency_no_escape && (emergency.mode == SHUTTLE_STRANDED || emergency.mode == SHUTTLE_STATE_DOCKED))
+		emergency.mode = SHUTTLE_STATE_DOCKED
 		emergency.setTimer(emergency_dock_time)
 		priority_announce(
 			text = "You have [DisplayTimeText(emergency_dock_time)] to board the emergency shuttle.",
@@ -869,7 +921,7 @@ SUBSYSTEM_DEF(shuttle)
 
 	// get the existing shuttle information, if any
 	var/timer = 0
-	var/mode = SHUTTLE_IDLE
+	var/mode = SHUTTLE_STATE_IDLE
 	var/obj/docking_port/stationary/dest_dock
 
 	if(istype(destination_port))
@@ -898,7 +950,7 @@ SUBSYSTEM_DEF(shuttle)
 	preview_shuttle.register(replace)
 	var/list/force_memory = preview_shuttle.movement_force
 	preview_shuttle.movement_force = list("KNOCKDOWN" = 0, "THROW" = 0)
-	preview_shuttle.mode = SHUTTLE_PREARRIVAL//No idle shuttle moving. Transit dock get removed if shuttle moves too long.
+	preview_shuttle.mode = SHUTTLE_STATE_PREARRIVAL//No idle shuttle moving. Transit dock get removed if shuttle moves too long.
 	preview_shuttle.initiate_docking(dest_dock)
 	preview_shuttle.movement_force = force_memory
 
@@ -1044,7 +1096,7 @@ SUBSYSTEM_DEF(shuttle)
 			L["can_fly"] = FALSE
 		else if(!M.destination)
 			L["can_fast_travel"] = FALSE
-		if (M.mode != SHUTTLE_IDLE)
+		if (M.mode != SHUTTLE_STATE_IDLE)
 			L["mode"] = capitalize(M.mode)
 		L["status"] = M.getDbgStatusText()
 		if(M == existing_shuttle)

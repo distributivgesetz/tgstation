@@ -425,7 +425,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/status_display/evac, 32)
 		// have loaded. Cross our fingers that it will soon return.
 		line1 = "shutl"
 		line2 = "not in service"
-	else if(SSshuttle.supply.mode == SHUTTLE_IDLE)
+	else if(SSshuttle.supply.mode == SHUTTLE_STATE_IDLE)
 		if(is_station_level(SSshuttle.supply.z))
 			line1 = "CARGO"
 			line2 = "Docked"

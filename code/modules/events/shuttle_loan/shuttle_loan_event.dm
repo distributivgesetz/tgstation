@@ -58,7 +58,7 @@
 	dep_account?.adjust_money(situation.bonus_points)
 	end_when = activeFor + 1
 
-	SSshuttle.supply.mode = SHUTTLE_CALL
+	SSshuttle.supply.mode = SHUTTLE_STATE_CALL
 	SSshuttle.supply.destination = SSshuttle.getDock("cargo_home")
 	SSshuttle.supply.setTimer(3000)
 	SSshuttle.centcom_message += situation.shuttle_transit_text
@@ -67,7 +67,7 @@
 
 /datum/round_event/shuttle_loan/tick()
 	if(dispatched)
-		if(SSshuttle.supply.mode != SHUTTLE_IDLE)
+		if(SSshuttle.supply.mode != SHUTTLE_STATE_IDLE)
 			end_when = activeFor
 		else
 			end_when = activeFor + 1

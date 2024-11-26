@@ -82,11 +82,11 @@
 		data["status"] = "Locked"
 	else
 		switch(mobile_docking_port.mode)
-			if(SHUTTLE_IGNITING)
+			if(SHUTTLE_STATE_IGNITING)
 				data["status"] = "Igniting"
-			if(SHUTTLE_IDLE)
+			if(SHUTTLE_STATE_IDLE)
 				data["status"] = "Idle"
-			if(SHUTTLE_RECHARGING)
+			if(SHUTTLE_STATE_RECHARGING)
 				data["status"] = "Recharging"
 			else
 				data["status"] = "In Transit"
@@ -148,9 +148,9 @@
 	if(shuttle_port.launch_status == ENDGAME_LAUNCHED)
 		return SHUTTLE_CONSOLE_ENDGAME
 	if(no_destination_swap)
-		if(shuttle_port.mode == SHUTTLE_RECHARGING)
+		if(shuttle_port.mode == SHUTTLE_STATE_RECHARGING)
 			return SHUTTLE_CONSOLE_RECHARGING
-		if(shuttle_port.mode != SHUTTLE_IDLE)
+		if(shuttle_port.mode != SHUTTLE_STATE_IDLE)
 			return SHUTTLE_CONSOLE_INTRANSIT
 	//check to see if the dest_id passed from tgui is actually a valid destination
 	var/list/dest_list = get_valid_destinations()

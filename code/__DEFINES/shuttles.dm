@@ -1,20 +1,31 @@
 //shuttle mode defines
-#define SHUTTLE_IDLE "idle"
-#define SHUTTLE_IGNITING "igniting"
-#define SHUTTLE_RECALL "recalled"
-#define SHUTTLE_CALL "called"
-#define SHUTTLE_DOCKED "docked"
-#define SHUTTLE_STRANDED "stranded"
-#define SHUTTLE_DISABLED "disabled"
-#define SHUTTLE_ESCAPE "escape"
-#define SHUTTLE_ENDGAME "endgame: game over"
-#define SHUTTLE_RECHARGING "recharging"
-#define SHUTTLE_PREARRIVAL "landing"
+/// Default do-nothing state. Shuttles can be called from here.
+#define SHUTTLE_STATE_IDLE "idle"
+/// Pre-takeoff state. Default shuttles can be cancelled from here.
+#define SHUTTLE_STATE_IGNITING "igniting"
+/// Shuttle "transit" state.
+#define SHUTTLE_STATE_CALL "called"
 
-#define EMERGENCY_IDLE_OR_RECALLED (SSshuttle.emergency && ((SSshuttle.emergency.mode == SHUTTLE_IDLE) || (SSshuttle.emergency.mode == SHUTTLE_RECALL)))
-#define EMERGENCY_ESCAPED_OR_ENDGAMED (SSshuttle.emergency && ((SSshuttle.emergency.mode == SHUTTLE_ESCAPE) || (SSshuttle.emergency.mode == SHUTTLE_ENDGAME)))
-#define EMERGENCY_AT_LEAST_DOCKED (SSshuttle.emergency && SSshuttle.emergency.mode != SHUTTLE_IDLE && SSshuttle.emergency.mode != SHUTTLE_RECALL && SSshuttle.emergency.mode != SHUTTLE_CALL)
-#define EMERGENCY_PAST_POINT_OF_NO_RETURN ((SSshuttle.emergency && SSshuttle.emergency.mode == SHUTTLE_CALL && !SSshuttle.canRecall()) || EMERGENCY_AT_LEAST_DOCKED)
+/// Emergency shuttle specific states
+#define SHUTTLE_STATE_RECALL "recalled"
+#define SHUTTLE_STATE_CALL_PONR "called (point of no return)"
+#define SHUTTLE_STATE_DOCKED "docked"
+#define SHUTTLE_STATE_DISABLED "disabled"
+#define SHUTTLE_STATE_ESCAPE "escape"
+#define SHUTTLE_STATE_ENDGAME "endgame: game over"
+#define SHUTTLE_STATE_RECHARGING "recharging"
+#define SHUTTLE_STATE_PREARRIVAL "landing"
+#define SHUTTLE_STATE_HOSTILE_ENV "hostile environment"
+#define SHUTTLE_STATE_STRANDED_FROM(original_state) "stranded, originally [original_state]"
+
+// special shuttle transitions
+#define SHUTTLE_TRANSITION_STRAND "strand"
+#define SHUTTLE_TRANSITION_UNSTRAND "unstrand"
+
+#define EMERGENCY_IDLE_OR_RECALLED (SSshuttle.emergency && ((SSshuttle.emergency.mode == SHUTTLE_STATE_IDLE) || (SSshuttle.emergency.mode == SHUTTLE_STATE_RECALL)))
+#define EMERGENCY_ESCAPED_OR_ENDGAMED (SSshuttle.emergency && ((SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE) || (SSshuttle.emergency.mode == SHUTTLE_STATE_ENDGAME)))
+#define EMERGENCY_AT_LEAST_DOCKED (SSshuttle.emergency && SSshuttle.emergency.mode != SHUTTLE_STATE_IDLE && SSshuttle.emergency.mode != SHUTTLE_STATE_RECALL && SSshuttle.emergency.mode != SHUTTLE_STATE_CALL)
+#define EMERGENCY_PAST_POINT_OF_NO_RETURN ((SSshuttle.emergency && SSshuttle.emergency.mode == SHUTTLE_STATE_CALL && !SSshuttle.canRecall()) || EMERGENCY_AT_LEAST_DOCKED)
 
 // Shuttle return values
 #define SHUTTLE_CAN_DOCK "can_dock"

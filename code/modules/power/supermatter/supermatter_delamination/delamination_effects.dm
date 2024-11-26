@@ -130,13 +130,13 @@
 	and that the shuttle is in stranded mode, then frees it with an announcement.
 	This is a botched solution to a problem that could be solved with a small change in shuttle code, however-
 	*/
-	if(SSshuttle.emergency.mode == SHUTTLE_IDLE)
+	if(SSshuttle.emergency.mode == SHUTTLE_STATE_IDLE)
 		SSshuttle.emergency.mode = SHUTTLE_STRANDED
 		SSshuttle.registerHostileEnvironment(src)
 		return
 
 	// say goodbye to that shuttle of yours
-	if(SSshuttle.emergency.mode != SHUTTLE_ESCAPE)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_ESCAPE)
 		priority_announce(
 			text = "Fatal error occurred in emergency shuttle uplink during transit. Unable to reestablish connection.",
 			title = "Shuttle Failure",
@@ -202,7 +202,7 @@
 	priority_announce("[Gibberish("All attempts at evacuation have now ceased, and all assets have been retrieved from your sector.\n \
 		To the remaining survivors of [station_name()], farewell.", FALSE, 5)]")
 
-	if(SSshuttle.emergency.mode == SHUTTLE_ESCAPE)
+	if(SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE)
 		// special message for hijacks
 		var/shuttle_msg = "Navigation protocol set to [SSshuttle.emergency.is_hijacked() ? "\[ERROR\]" : "backup route"]. \
 			Reorienting bluespace vessel to exit vector. ETA 15 seconds."

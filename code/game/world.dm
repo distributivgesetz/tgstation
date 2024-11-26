@@ -420,7 +420,7 @@ GLOBAL_PROTECT(tracy_init_reason)
 			new_status += "<br>Starting: <b>Now</b>"
 		else if(SSticker.IsRoundInProgress())
 			new_status += "<br>Time: <b>[time2text(STATION_TIME_PASSED(), "hh:mm", 0)]</b>"
-			if(SSshuttle?.emergency && SSshuttle?.emergency?.mode != (SHUTTLE_IDLE || SHUTTLE_ENDGAME))
+			if(SSshuttle?.emergency && SSshuttle?.emergency?.mode != (SHUTTLE_STATE_IDLE || SHUTTLE_STATE_ENDGAME))
 				new_status += " | Shuttle: <b>[SSshuttle.emergency.getModeStr()] [SSshuttle.emergency.getTimerStr()]</b>"
 			if(SStime_track?.time_dilation_avg > 0)
 				new_status += " | Time Dilation: <b>[round(SStime_track?.time_dilation_avg)]%</b>"

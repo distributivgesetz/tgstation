@@ -188,7 +188,7 @@
 		if(!no_escape_event)
 			var/area/escape_shuttle_area = get_area(src)
 			// beacon must be on the traveling escape shuttle (not a pod)
-			if(istype(escape_shuttle_area, /area/shuttle/escape) && (SSshuttle.emergency.mode == SHUTTLE_ESCAPE) && SSshuttle.emergency.is_in_shuttle_bounds(src))
+			if(istype(escape_shuttle_area, /area/shuttle/escape) && (SSshuttle.emergency.mode == SHUTTLE_STATE_ESCAPE) && SSshuttle.emergency.is_in_shuttle_bounds(src))
 				var/obj/docking_port/mobile/port = SSshuttle.emergency
 				no_escape_event = port.add_shuttle_event(/datum/shuttle_event/simple_spawner/black_hole/no_escape)
 				no_escape_event.beacon = src

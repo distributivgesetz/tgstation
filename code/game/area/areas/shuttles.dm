@@ -120,7 +120,7 @@
 
 
 /area/shuttle/arrival/on_joining_game(mob/living/boarder)
-	if(SSshuttle.arrivals?.mode == SHUTTLE_CALL)
+	if(SSshuttle.arrivals?.mode == SHUTTLE_STATE_CALL)
 		var/atom/movable/screen/splash/Spl = new(null, boarder.client, TRUE)
 		Spl.Fade(TRUE)
 		boarder.playsound_local(get_turf(boarder), 'sound/announcer/ApproachingTG.ogg', 25)

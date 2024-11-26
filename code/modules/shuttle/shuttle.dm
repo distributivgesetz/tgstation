@@ -458,7 +458,7 @@
 	var/timer
 	var/last_timer_length
 	///current shuttle mode
-	var/mode = SHUTTLE_IDLE
+	var/mode = SHUTTLE_STATE_IDLE
 	///time spent in transit (deciseconds). Should not be lower then 10 seconds without editing the animation of the hyperspace ripples.
 	var/callTime = 100
 	/// time spent "starting the engines". Also rate limits how often we try to reserve transit space if its ever full of transiting shuttles.
@@ -704,42 +704,42 @@
 		testing("check_dock failed on request for [src]")
 		return
 
-	if(mode == SHUTTLE_IGNITING && destination == destination_port)
+	if(mode == SHUTTLE_STATE_IGNITING && destination == destination_port)
 		return
 
 	switch(mode)
-		if(SHUTTLE_CALL)
+		if(SHUTTLE_STATE_CALL)
 			if(destination_port == destination)
 				if(timeLeft(1) < callTime * engine_coeff)
 					setTimer(callTime * engine_coeff)
 			else
 				destination = destination_port
 				setTimer(callTime * engine_coeff)
-		if(SHUTTLE_RECALL)
+		if(SHUTTLE_STATE_RECALL)
 			if(destination_port == destination)
 				setTimer(callTime * engine_coeff - timeLeft(1))
 			else
 				destination = destination_port
 				setTimer(callTime * engine_coeff)
-			mode = SHUTTLE_CALL
-		if(SHUTTLE_IDLE, SHUTTLE_IGNITING)
+			mode = SHUTTLE_STATE_CALL
+		if(SHUTTLE_STATE_IDLE, SHUTTLE_STATE_IGNITING)
 			destination = destination_port
-			mode = SHUTTLE_IGNITING
+			mode = SHUTTLE_STATE_IGNITING
 			setTimer(ignitionTime)
 
 //recall the shuttle to where it was previously
 /obj/docking_port/mobile/proc/cancel()
-	if(mode != SHUTTLE_CALL)
+	if(mode != SHUTTLE_STATE_CALL)
 		return
 
 	remove_ripples()
 
 	invertTimer()
-	mode = SHUTTLE_RECALL
+	mode = SHUTTLE_STATE_RECALL
 
 /obj/docking_port/mobile/proc/enterTransit()
 	if((SSshuttle.lockdown && is_station_level(z)) || !canMove()) //emp went off, no escape
-		mode = SHUTTLE_IDLE
+		mode = SHUTTLE_STATE_IDLE
 		return
 	previous = null
 	if(!destination)
@@ -848,7 +848,7 @@
 	check_effects()
 	//process_events() if you were to add events to non-escape shuttles, uncomment this
 
-	if(mode == SHUTTLE_IGNITING)
+	if(mode == SHUTTLE_STATE_IGNITING)
 		check_transit_zone()
 
 	if(timeLeft(1) > 0)
@@ -856,9 +856,9 @@
 	// If we can't dock or we don't have a transit slot, wait for 20 ds,
 	// then try again
 	switch(mode)
-		if(SHUTTLE_CALL, SHUTTLE_PREARRIVAL)
-			if(prearrivalTime && mode != SHUTTLE_PREARRIVAL)
-				mode = SHUTTLE_PREARRIVAL
+		if(SHUTTLE_STATE_CALL, SHUTTLE_STATE_PREARRIVAL)
+			if(prearrivalTime && mode != SHUTTLE_STATE_PREARRIVAL)
+				mode = SHUTTLE_STATE_PREARRIVAL
 				setTimer(prearrivalTime)
 				return
 			var/error = initiate_docking(destination, preferred_direction)
@@ -866,36 +866,36 @@
 				var/msg = "A mobile dock in transit exited initiate_docking() with an error. This is most likely a mapping problem: Error: [error],  ([src]) ([previous][ADMIN_JMP(previous)] -> [destination][ADMIN_JMP(destination)])"
 				WARNING(msg)
 				message_admins(msg)
-				mode = SHUTTLE_IDLE
+				mode = SHUTTLE_STATE_IDLE
 				return
 			else if(error)
 				setTimer(20)
 				return
 			if(rechargeTime)
-				mode = SHUTTLE_RECHARGING
+				mode = SHUTTLE_STATE_RECHARGING
 				setTimer(rechargeTime)
 				return
-		if(SHUTTLE_RECALL)
+		if(SHUTTLE_STATE_RECALL)
 			if(initiate_docking(previous) != DOCKING_SUCCESS)
 				setTimer(20)
 				return
-		if(SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IGNITING)
 			if(check_transit_zone() != TRANSIT_READY)
 				setTimer(20)
 				return
 			else
-				mode = SHUTTLE_CALL
+				mode = SHUTTLE_STATE_CALL
 				setTimer(callTime * engine_coeff)
 				enterTransit()
 				return
 
-	mode = SHUTTLE_IDLE
+	mode = SHUTTLE_STATE_IDLE
 	timer = 0
 	destination = null
 
 /obj/docking_port/mobile/proc/check_effects()
 	if(!ripples.len)
-		if((mode == SHUTTLE_CALL) || (mode == SHUTTLE_RECALL))
+		if((mode == SHUTTLE_STATE_CALL) || (mode == SHUTTLE_STATE_RECALL))
 			var/tl = timeLeft(1)
 			if(tl <= SHUTTLE_RIPPLE_TIME)
 				create_ripples(destination, tl)
@@ -978,29 +978,29 @@
 // returns 3-letter mode string, used by status screens and mob status panel
 /obj/docking_port/mobile/proc/getModeStr()
 	switch(mode)
-		if(SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IGNITING)
 			return "IGN"
-		if(SHUTTLE_RECALL)
+		if(SHUTTLE_STATE_RECALL)
 			return "RCL"
-		if(SHUTTLE_CALL)
+		if(SHUTTLE_STATE_CALL)
 			return "ETA"
-		if(SHUTTLE_DOCKED)
+		if(SHUTTLE_STATE_DOCKED)
 			return "ETD"
-		if(SHUTTLE_ESCAPE)
+		if(SHUTTLE_STATE_ESCAPE)
 			return "ESC"
 		if(SHUTTLE_STRANDED)
 			return "ERR"
-		if(SHUTTLE_RECHARGING)
+		if(SHUTTLE_STATE_RECHARGING)
 			return "RCH"
-		if(SHUTTLE_PREARRIVAL)
+		if(SHUTTLE_STATE_PREARRIVAL)
 			return "LDN"
-		if(SHUTTLE_DISABLED)
+		if(SHUTTLE_STATE_DISABLED)
 			return "DIS"
 	return ""
 
 // returns 5-letter timer string, used by status screens and mob status panel
 /obj/docking_port/mobile/proc/getTimerStr()
-	if(mode == SHUTTLE_STRANDED || mode == SHUTTLE_DISABLED)
+	if(mode == SHUTTLE_STRANDED || mode == SHUTTLE_STATE_DISABLED)
 		return "--:--"
 
 	var/timeleft = timeLeft()
@@ -1022,7 +1022,7 @@
 	if(timeLeft() > 1 HOURS)
 		return "Hyperspace"
 	else
-		var/obj/docking_port/stationary/dst = (mode == SHUTTLE_RECALL) ? previous : destination
+		var/obj/docking_port/stationary/dst = (mode == SHUTTLE_STATE_RECALL) ? previous : destination
 		return "In transit to [dst?.name || "unknown location"]"
 
 /obj/docking_port/mobile/proc/getStatusText()
@@ -1033,12 +1033,12 @@
 			return "hyperspace"
 		else
 			var/obj/docking_port/stationary/dst
-			if(mode == SHUTTLE_RECALL)
+			if(mode == SHUTTLE_STATE_RECALL)
 				dst = previous
 			else
 				dst = destination
 			. = "transit towards [dst?.name || "unknown location"] ([getTimerStr()])"
-	else if(mode == SHUTTLE_RECHARGING)
+	else if(mode == SHUTTLE_STATE_RECHARGING)
 		return "[docked_at], recharging [getTimerStr()]"
 	else
 		return docked_at
@@ -1048,7 +1048,7 @@
 	. = (dockedAt?.name) ? dockedAt.name : "unknown"
 	if(istype(dockedAt, /obj/docking_port/stationary/transit))
 		var/obj/docking_port/stationary/dst
-		if(mode == SHUTTLE_RECALL)
+		if(mode == SHUTTLE_STATE_RECALL)
 			dst = previous
 		else
 			dst = destination
@@ -1152,17 +1152,17 @@
 
 /obj/docking_port/mobile/proc/in_flight()
 	switch(mode)
-		if(SHUTTLE_CALL,SHUTTLE_RECALL,SHUTTLE_PREARRIVAL)
+		if(SHUTTLE_STATE_CALL,SHUTTLE_STATE_RECALL,SHUTTLE_STATE_PREARRIVAL)
 			return TRUE
-		if(SHUTTLE_IDLE,SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IDLE,SHUTTLE_STATE_IGNITING)
 			return FALSE
 	return FALSE // hmm
 
 /obj/docking_port/mobile/emergency/in_flight()
 	switch(mode)
-		if(SHUTTLE_ESCAPE)
+		if(SHUTTLE_STATE_ESCAPE)
 			return TRUE
-		if(SHUTTLE_STRANDED,SHUTTLE_ENDGAME)
+		if(SHUTTLE_STRANDED,SHUTTLE_STATE_ENDGAME)
 			return FALSE
 	return ..()
 
@@ -1190,7 +1190,7 @@
 /obj/docking_port/mobile/pod/on_emergency_dock()
 	if(launch_status == ENDGAME_LAUNCHED)
 		initiate_docking(SSshuttle.getDock("[shuttle_id]_away")) //Escape pods dock at centcom
-		mode = SHUTTLE_ENDGAME
+		mode = SHUTTLE_STATE_ENDGAME
 
 /obj/docking_port/mobile/emergency/on_emergency_dock()
 	return

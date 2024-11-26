@@ -40,7 +40,7 @@ ADMIN_VERB(call_shuttle, R_ADMIN, "Call Shuttle", "Force a shuttle call with add
 			return
 		if("Yes (No Recall)")
 			SSshuttle.admin_emergency_no_recall = TRUE
-			SSshuttle.emergency.mode = SHUTTLE_IDLE
+			SSshuttle.emergency.mode = SHUTTLE_STATE_IDLE
 
 	SSshuttle.emergency.request()
 	BLACKBOX_LOG_ADMIN_VERB("Call Shuttle")
@@ -60,7 +60,7 @@ ADMIN_VERB(cancel_shuttle, R_ADMIN, "Cancel Shuttle", "Recall the shuttle, regar
 	message_admins(span_adminnotice("[key_name_admin(user)] admin-recalled the emergency shuttle."))
 
 ADMIN_VERB(disable_shuttle, R_ADMIN, "Disable Shuttle", "Those fuckers aren't getting out.", ADMIN_CATEGORY_SHUTTLE)
-	if(SSshuttle.emergency.mode == SHUTTLE_DISABLED)
+	if(SSshuttle.emergency.mode == SHUTTLE_STATE_DISABLED)
 		to_chat(user, span_warning("Error, shuttle is already disabled."))
 		return
 
@@ -73,7 +73,7 @@ ADMIN_VERB(disable_shuttle, R_ADMIN, "Disable Shuttle", "Those fuckers aren't ge
 	SSshuttle.last_call_time = SSshuttle.emergency.timeLeft(1)
 	SSshuttle.admin_emergency_no_recall = TRUE
 	SSshuttle.emergency.setTimer(0)
-	SSshuttle.emergency.mode = SHUTTLE_DISABLED
+	SSshuttle.emergency.mode = SHUTTLE_STATE_DISABLED
 	priority_announce(
 		text = "Emergency Shuttle uplink failure, shuttle disabled until further notice.",
 		title = "Uplink Failure",
@@ -83,7 +83,7 @@ ADMIN_VERB(disable_shuttle, R_ADMIN, "Disable Shuttle", "Those fuckers aren't ge
 	)
 
 ADMIN_VERB(enable_shuttle, R_ADMIN, "Enable Shuttle", "Those fuckers ARE getting out.", ADMIN_CATEGORY_SHUTTLE)
-	if(SSshuttle.emergency.mode != SHUTTLE_DISABLED)
+	if(SSshuttle.emergency.mode != SHUTTLE_STATE_DISABLED)
 		to_chat(user, span_warning("Error, shuttle not disabled."))
 		return
 
@@ -93,11 +93,11 @@ ADMIN_VERB(enable_shuttle, R_ADMIN, "Enable Shuttle", "Those fuckers ARE getting
 	message_admins(span_adminnotice("[key_name_admin(user)] enabled the emergency shuttle."))
 	SSshuttle.admin_emergency_no_recall = FALSE
 	SSshuttle.emergency_no_recall = FALSE
-	if(SSshuttle.last_mode == SHUTTLE_DISABLED) //If everything goes to shit, fix it.
-		SSshuttle.last_mode = SHUTTLE_IDLE
+	if(SSshuttle.last_mode == SHUTTLE_STATE_DISABLED) //If everything goes to shit, fix it.
+		SSshuttle.last_mode = SHUTTLE_STATE_IDLE
 
 	SSshuttle.emergency.mode = SSshuttle.last_mode
-	if(SSshuttle.last_call_time < 10 SECONDS && SSshuttle.last_mode != SHUTTLE_IDLE)
+	if(SSshuttle.last_call_time < 10 SECONDS && SSshuttle.last_mode != SHUTTLE_STATE_IDLE)
 		SSshuttle.last_call_time = 10 SECONDS //Make sure no insta departures.
 	SSshuttle.emergency.setTimer(SSshuttle.last_call_time)
 	priority_announce(
@@ -152,7 +152,7 @@ ADMIN_VERB(shuttle_panel, R_ADMIN, "Shuttle Manipulator", "Opens the shuttle man
 	switch(selection)
 		if("Infinite Transit")
 			destination = null
-			mode = SHUTTLE_IGNITING
+			mode = SHUTTLE_STATE_IGNITING
 			setTimer(ignitionTime)
 
 		if("Delete Shuttle")

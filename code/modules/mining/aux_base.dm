@@ -94,11 +94,11 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/computer/auxiliary_base, 32)
 		data["status"] = "Missing"
 		return data
 	switch(M.mode)
-		if(SHUTTLE_IGNITING)
+		if(SHUTTLE_STATE_IGNITING)
 			data["status"] = "Igniting"
-		if(SHUTTLE_IDLE)
+		if(SHUTTLE_STATE_IDLE)
 			data["status"] = "Idle"
-		if(SHUTTLE_RECHARGING)
+		if(SHUTTLE_STATE_RECHARGING)
 			data["status"] = "Recharging"
 		else
 			data["status"] = "In Transit"
