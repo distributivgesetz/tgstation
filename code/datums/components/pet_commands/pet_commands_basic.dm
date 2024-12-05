@@ -7,7 +7,7 @@
 /datum/pet_command/idle
 	command_name = "Stay"
 	command_desc = "Command your pet to stay idle in this location."
-	radial_icon = 'icons/obj/structures/bed.dmi'
+	radial_icon = 'icons/obj/bed.dmi'
 	radial_icon_state = "dogbed"
 	speech_commands = list("sit", "stay", "stop")
 	command_feedback = "sits"
@@ -281,7 +281,7 @@
 /datum/pet_command/point_targeting/fish
 	command_name = "Fish"
 	command_desc = "Command your pet to try fishing at a nearby fishing spot."
-	radial_icon = 'icons/obj/structures/aquarium/fish.dmi'
+	radial_icon = 'icons/obj/aquarium/fish.dmi'
 	radial_icon_state = "goldfish"
 	speech_commands = list("fish")
 
@@ -298,5 +298,5 @@
 	return ..()
 
 /datum/pet_command/point_targeting/fish/execute_action(datum/ai_controller/controller)
-	controller.queue_behavior(/datum/ai_behavior/hunt_target/unarmed_attack_target/reset_target_combat_mode, BB_CURRENT_PET_TARGET)
+	controller.queue_behavior(/datum/ai_behavior/hunt_target/interact_with_target/reset_target_combat_mode_off, BB_CURRENT_PET_TARGET)
 	return SUBTREE_RETURN_FINISH_PLANNING

@@ -183,9 +183,9 @@
 
 	return INITIALIZE_HINT_LATELOAD
 
-/obj/machinery/LateInitialize(mapload)
+/obj/machinery/LateInitialize()
 	SHOULD_NOT_OVERRIDE(TRUE)
-	post_machine_initialize(/* mapload = */ mapload)
+	post_machine_initialize()
 
 /obj/machinery/Destroy(force)
 	SSmachines.unregister_machine(src)
@@ -202,7 +202,7 @@
  * ensuring power works on all machines unless exempted with NO_POWER_USE.
  * This is the proc to override if you want to do anything in LateInitialize.
  */
-/obj/machinery/proc/post_machine_initialize(mapload)
+/obj/machinery/proc/post_machine_initialize()
 	SHOULD_CALL_PARENT(TRUE)
 	power_change()
 	if(use_power == NO_POWER_USE)
@@ -334,6 +334,13 @@
 		return
 	remove_all_languages(source = LANGUAGE_EMP)
 	grant_random_uncommon_language(source = LANGUAGE_EMP)
+
+/obj/machinery/base_item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	//takes priority in case material container or other atoms that hook onto item interaction signals won't give it a chance
+	if(istype(tool, /obj/item/storage/part_replacer))
+		return tool.interact_with_atom(src, user, modifiers)
+
+	return ..()
 
 /**
  * Opens the machine.
@@ -648,6 +655,11 @@
 	if(interaction_flags_machine & INTERACT_MACHINE_REQUIRES_SILICON) //if the user was a silicon, we'd have returned out earlier, so the user must not be a silicon
 		return FALSE
 
+	if(interaction_flags_machine & INTERACT_MACHINE_REQUIRES_STANDING)
+		var/mob/living/living_user = user
+		if(!(living_user.mobility_flags & MOBILITY_MOVE))
+			return FALSE
+
 	return TRUE // If we passed all of those checks, woohoo! We can interact with this machine.
 
 /obj/machinery/proc/check_nap_violations()
@@ -731,13 +743,10 @@
 
 /obj/machinery/attack_hulk(mob/living/carbon/user)
 	. = ..()
-	var/obj/item/bodypart/arm = user.hand_bodyparts[user.active_hand_index]
-	if(!arm)
+	var/obj/item/bodypart/arm = user.get_active_hand()
+	if(!arm || arm.bodypart_disabled)
 		return
-	if(arm.bodypart_disabled)
-		return
-	var/damage = damage_deflection * 0.1
-	arm.receive_damage(brute=damage, wound_bonus = CANT_WOUND)
+	user.apply_damage(damage_deflection * 0.1, BRUTE, arm, wound_bonus = CANT_WOUND)
 
 /obj/machinery/attack_robot(mob/user)
 	if(!(interaction_flags_machine & INTERACT_MACHINE_ALLOW_SILICON) && !isAdminGhostAI(user))
@@ -1146,6 +1155,9 @@
 				. += "It appears heavily damaged."
 			if(0 to 25)
 				. += span_warning("It's falling apart!")
+
+/obj/machinery/examine_descriptor(mob/user)
+	return "machine"
 
 /obj/machinery/examine_more(mob/user)
 	. = ..()

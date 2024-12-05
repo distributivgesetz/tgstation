@@ -166,9 +166,9 @@
 	var/middragtime = 0
 	//Middle-mouse-button clicked object control for aimbot exploit detection. Weakref
 	var/datum/weakref/middle_drag_atom_ref
-	///When we started the currently active drag
+	//When we started the currently active drag
 	var/drag_start = 0
-	///The params we were passed at the start of the drag, in list form
+	//The params we were passed at the start of the drag, in list form
 	var/list/drag_details
 
 
@@ -269,3 +269,7 @@
 
 	///Which ambient sound this client is currently being provided.
 	var/current_ambient_sound
+
+	/// Does this client's mob need to rebuild its plane masters after login?
+	/// This is currently only used so a client can switch between 515 and 516 without breaking their rendering.
+	var/rebuild_plane_masters = FALSE

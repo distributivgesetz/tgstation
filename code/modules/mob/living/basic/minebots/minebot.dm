@@ -1,5 +1,4 @@
 /mob/living/basic/mining_drone
-	SET_BASE_VISUAL_PIXEL(0, 6) // Weird offset on the icon file
 	name = "\improper Nanotrasen minebot"
 	desc = "The instructions printed on the side read: This is a small robot used to support miners, can be set to search and collect loose ore, or to help fend off wildlife."
 	gender = NEUTER
@@ -19,7 +18,7 @@
 	obj_damage = 10
 	attack_verb_continuous = "drills"
 	attack_verb_simple = "drill"
-	attack_sound = 'sound/weapons/circsawhit.ogg'
+	attack_sound = 'sound/items/weapons/circsawhit.ogg'
 	sentience_type = SENTIENCE_MINEBOT
 	speak_emote = list("states")
 	mob_biotypes = MOB_ROBOTIC
@@ -32,7 +31,6 @@
 	light_on = FALSE
 	combat_mode = FALSE
 	ai_controller = /datum/ai_controller/basic_controller/minebot
-	shadow_offset_y = 6
 	///the gun we use to kill
 	var/obj/item/gun/energy/recharge/kinetic_accelerator/minebot/stored_gun
 	///our normal overlay
@@ -87,7 +85,6 @@
 		/datum/id_trim/job/shaft_miner,
 	)
 	AddElement(/datum/element/mob_access, accesses)
-	RegisterSignal(src, COMSIG_HOSTILE_PRE_ATTACKINGTARGET, PROC_REF(pre_attack))
 
 /mob/living/basic/mining_drone/set_combat_mode(new_mode, silent = TRUE)
 	. = ..()
@@ -252,13 +249,15 @@
 	QDEL_NULL(stored_gun)
 	return ..()
 
-/mob/living/basic/mining_drone/proc/pre_attack(datum/source, atom/target)
-	SIGNAL_HANDLER
+/mob/living/basic/mining_drone/early_melee_attack(atom/target, list/modifiers, ignore_cooldown)
+	. = ..()
+	if(!.)
+		return FALSE
 
 	if(!istype(target, /mob/living/basic/node_drone))
-		return NONE
-	INVOKE_ASYNC(src, PROC_REF(repair_node_drone), target)
-	return COMPONENT_HOSTILE_NO_ATTACK
+		return TRUE
+	repair_node_drone(target)
+	return FALSE
 
 /mob/living/basic/mining_drone/proc/repair_node_drone(mob/living/my_target)
 	do_sparks(5, FALSE, source = my_target)

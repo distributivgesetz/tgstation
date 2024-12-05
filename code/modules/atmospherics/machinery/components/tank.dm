@@ -88,7 +88,6 @@
 	air_contents = new
 	air_contents.temperature = T20C
 	air_contents.volume = volume
-	refresh_pressure_limit()
 
 	if(gas_type)
 		fill_to_pressure(gas_type)
@@ -121,7 +120,7 @@
 		. += span_notice("The pipe port can be moved or closed with a [wrench_hint].")
 	. += span_notice("A holographic sticker on it says that its maximum safe pressure is: [siunit_pressure(max_pressure, 0)].")
 
-/obj/machinery/atmospherics/components/tank/set_custom_materials(list/materials, multiplier)
+/obj/machinery/atmospherics/components/tank/finalize_material_effects(list/materials)
 	. = ..()
 	refresh_pressure_limit()
 
@@ -269,11 +268,14 @@
 
 	window = image(icon, icon_state = "window-bg", layer = FLOAT_LAYER)
 
+	var/static/alpha_filter
+	if(!alpha_filter) // Gotta do this separate since the icon may not be correct at world init
+		alpha_filter = filter(type="alpha", icon = icon('icons/obj/pipes_n_cables/stationary_canisters.dmi', "window-bg"))
+
 	var/list/new_underlays = list()
 	for(var/obj/effect/overlay/gas/gas as anything in air_contents.return_visuals(get_turf(src)))
 		var/image/new_underlay = image(gas.icon, icon_state = gas.icon_state, layer = FLOAT_LAYER)
-		new_underlay.pixel_z = -12 // Weird offset artifacting? might be my fault idk
-		new_underlay.filters = alpha_mask_filter(icon = icon(icon, icon_state = "window-bg"))
+		new_underlay.filters = alpha_filter
 		new_underlays += new_underlay
 
 	var/image/foreground = image(icon, icon_state = "window-fg", layer = FLOAT_LAYER)
@@ -305,7 +307,7 @@
 	. = TRUE
 	if(atom_integrity >= max_integrity)
 		return
-	if(!tool.tool_start_check(user, amount = 0))
+	if(!tool.tool_start_check(user, amount = 0, heat_required = HIGH_TEMPERATURE_REQUIRED))
 		return
 	to_chat(user, span_notice("You begin to repair the cracks in the gas tank..."))
 	var/repair_amount = max_integrity / 10
@@ -563,7 +565,7 @@
 	if(!anchored)
 		to_chat(user, span_notice("You need to <b>wrench</b> [src] to the floor before finishing."))
 		return
-	if(!tool.tool_start_check(user, amount = 0))
+	if(!tool.tool_start_check(user, amount = 0, heat_required = HIGH_TEMPERATURE_REQUIRED))
 		return
 	to_chat(user, span_notice("You begin sealing the outer plating with the welder..."))
 	if(!tool.use_tool(src, user, 2 SECONDS, volume = 60))

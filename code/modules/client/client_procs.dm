@@ -329,10 +329,20 @@ GLOBAL_LIST_INIT(blacklisted_builds, list(
 	if(GLOB.player_details[ckey])
 		reconnecting = TRUE
 		player_details = GLOB.player_details[ckey]
-		player_details.byond_version = full_version
+		var/old_version = player_details.byond_version
+		player_details.byond_version = byond_version
+		player_details.byond_build = byond_build
+
+#if MIN_COMPILER_VERSION > 516
+	#warn Fully change default relay_loc to "1,1", rather than changing it based on client version
+#endif
+		if(old_version != byond_version)
+			rebuild_plane_masters = TRUE
+
 	else
 		player_details = new(ckey)
-		player_details.byond_version = full_version
+		player_details.byond_version = byond_version
+		player_details.byond_build = byond_build
 		GLOB.player_details[ckey] = player_details
 
 
@@ -536,7 +546,7 @@ GLOBAL_LIST_INIT(blacklisted_builds, list(
 	if(!winexists(src, "asset_cache_browser")) // The client is using a custom skin, tell them.
 		to_chat(src, span_warning("Unable to access asset cache browser, if you are using a custom skin file, please allow DS to download the updated version, if you are not, then make a bug report. This is not a critical issue but can cause issues with resource downloading, as it is impossible to know when extra resources arrived to you."))
 
-	update_ambience_pref(prefs.read_preference(/datum/preference/toggle/sound_ambience))
+	update_ambience_pref(prefs.read_preference(/datum/preference/numeric/sound_ambience_volume))
 	check_ip_intel()
 
 	//This is down here because of the browse() calls in tooltip/New()
@@ -726,22 +736,16 @@ GLOBAL_LIST_INIT(blacklisted_builds, list(
 					qdel(query_datediff)
 	qdel(query_get_client_age)
 	if(!new_player)
-		var/datum/db_query/query_log_player = SSdbcore.NewQuery(
+		SSdbcore.FireAndForget(
 			"UPDATE [format_table_name("player")] SET lastseen = Now(), lastseen_round_id = :round_id, ip = INET_ATON(:ip), computerid = :computerid, lastadminrank = :admin_rank, accountjoindate = :account_join_date WHERE ckey = :ckey",
 			list("round_id" = GLOB.round_id, "ip" = address, "computerid" = computer_id, "admin_rank" = admin_rank, "account_join_date" = account_join_date || null, "ckey" = ckey)
 		)
-		if(!query_log_player.Execute())
-			qdel(query_log_player)
-			return
-		qdel(query_log_player)
 	if(!account_join_date)
 		account_join_date = "Error"
-	var/datum/db_query/query_log_connection = SSdbcore.NewQuery({"
+	SSdbcore.FireAndForget({"
 		INSERT INTO `[format_table_name("connection_log")]` (`id`,`datetime`,`server_ip`,`server_port`,`round_id`,`ckey`,`ip`,`computerid`)
 		VALUES(null,Now(),INET_ATON(:internet_address),:port,:round_id,:ckey,INET_ATON(:ip),:computerid)
 	"}, list("internet_address" = world.internet_address || "0", "port" = world.port, "round_id" = GLOB.round_id, "ckey" = ckey, "ip" = address, "computerid" = computer_id))
-	query_log_connection.Execute()
-	qdel(query_log_connection)
 
 	SSserver_maint.UpdateHubStatus()
 
@@ -836,23 +840,6 @@ GLOBAL_LIST_INIT(blacklisted_builds, list(
 	var/dragged = LAZYACCESS(modifiers, DRAG)
 	if(dragged && button_clicked != dragged)
 		return
-
-	if(mob.turf_click_type != TURF_CLICK_FLAT && isturf(object) && length(modifiers))
-		//Split screen-loc up into X+Pixel_X and Y+Pixel_Y
-		var/list/screen_loc_params = splittext(modifiers[SCREEN_LOC], ",")
-		//Split Y+Pixel_Y up into list(Y, Pixel_Y)
-		var/list/screen_loc_Y = splittext(screen_loc_params[2],":")
-		var/pixel_offset = text2num(screen_loc_Y[2])
-		var/turf/below = get_step(object, SOUTH)
-		if(pixel_offset <= DEPTH_OFFSET && below)
-			object = below // Swap our target, cube click moment
-			if(mob.turf_click_type != TURF_CLICK_CUBE_KEEP_PARAMS)
-				if(modifiers[ICON_Y])
-					modifiers[ICON_Y] = WRAP(text2num(modifiers[ICON_Y]) - DEPTH_OFFSET, 0, world.icon_size)
-				screen_loc_Y[1] -= 1
-				screen_loc_Y[2] =  WRAP(pixel_offset - DEPTH_OFFSET, 0, world.icon_size)
-				screen_loc_params[2] = screen_loc_Y.Join(":")
-				modifiers[SCREEN_LOC] = screen_loc_params.Join(",")
 
 	if (object && IS_WEAKREF_OF(object, middle_drag_atom_ref) && button_clicked == LEFT_CLICK)
 		ab = max(0, 5 SECONDS-(world.time-middragtime)*0.1)

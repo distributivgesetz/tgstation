@@ -7,7 +7,7 @@
 	name = "flashlight"
 	desc = "A hand-held emergency light."
 	custom_price = PAYCHECK_CREW
-	icon = 'icons/obj/devices/lighting.dmi'
+	icon = 'icons/obj/lighting.dmi'
 	dir = WEST
 	icon_state = "flashlight"
 	inhand_icon_state = "flashlight"
@@ -29,9 +29,9 @@
 	/// Can we toggle this light on and off (used for contexual screentips only)
 	var/toggle_context = TRUE
 	/// The sound the light makes when it's turned on
-	var/sound_on = 'sound/weapons/magin.ogg'
+	var/sound_on = 'sound/items/weapons/magin.ogg'
 	/// The sound the light makes when it's turned off
-	var/sound_off = 'sound/weapons/magout.ogg'
+	var/sound_off = 'sound/items/weapons/magout.ogg'
 	/// Should the flashlight start turned on?
 	var/start_on = FALSE
 
@@ -41,8 +41,6 @@
 		set_light_on(TRUE)
 	update_brightness()
 	register_context()
-	if(toggle_context)
-		RegisterSignal(src, COMSIG_HIT_BY_SABOTEUR, PROC_REF(on_saboteur))
 
 	var/static/list/slapcraft_recipe_list = list(/datum/crafting_recipe/flashlight_eyes)
 
@@ -114,8 +112,8 @@
 		to_chat(user, span_warning("You're going to need to remove that [(M.head && M.head.flags_cover & HEADCOVERSEYES) ? "helmet" : (M.wear_mask && M.wear_mask.flags_cover & MASKCOVERSEYES) ? "mask": "glasses"] first!"))
 		return
 
-	var/obj/item/organ/internal/eyes/E = M.get_organ_slot(ORGAN_SLOT_EYES)
-	var/obj/item/organ/internal/brain = M.get_organ_slot(ORGAN_SLOT_BRAIN)
+	var/obj/item/organ/eyes/E = M.get_organ_slot(ORGAN_SLOT_EYES)
+	var/obj/item/organ/brain = M.get_organ_slot(ORGAN_SLOT_BRAIN)
 	if(!E)
 		to_chat(user, span_warning("[M] doesn't have any eyes!"))
 		return
@@ -256,7 +254,7 @@
 	if(!scanning.get_bodypart(BODY_ZONE_HEAD))
 		to_chat(user, span_warning("[scanning] doesn't have a head!"))
 		return
-	if(light_power < 1)
+	if(light_power < 0.5)
 		to_chat(user, span_warning("[src] isn't bright enough to see anything!"))
 		return
 
@@ -286,18 +284,17 @@
 		setDir(user.dir)
 
 /// when hit by a light disruptor - turns the light off, forces the light to be disabled for a few seconds
-/obj/item/flashlight/proc/on_saboteur(datum/source, disrupt_duration)
-	SIGNAL_HANDLER
+/obj/item/flashlight/on_saboteur(datum/source, disrupt_duration)
+	. = ..()
 	if(light_on)
 		toggle_light()
 	COOLDOWN_START(src, disabled_time, disrupt_duration)
-	return COMSIG_SABOTEUR_SUCCESS
+	return TRUE
 
 /obj/item/flashlight/pen
 	name = "penlight"
 	desc = "A pen-sized light, used by medical staff. It can also be used to create a hologram to alert people of incoming medical assistance."
 	dir = EAST
-	icon = 'icons/obj/service/bureaucracy.dmi'
 	icon_state = "penlight"
 	inhand_icon_state = ""
 	worn_icon_state = "pen"
@@ -362,7 +359,7 @@
 	light_range = 5 // A little better than the standard flashlight.
 	light_power = 0.8
 	light_color = "#99ccff"
-	hitsound = 'sound/weapons/genhit1.ogg'
+	hitsound = 'sound/items/weapons/genhit1.ogg'
 
 // the desk lamps are a bit special
 /obj/item/flashlight/lamp
@@ -431,7 +428,7 @@
 	if(light_on)
 		attack_verb_continuous = string_list(list("burns", "singes"))
 		attack_verb_simple = string_list(list("burn", "singe"))
-		hitsound = 'sound/items/welder.ogg'
+		hitsound = 'sound/items/tools/welder.ogg'
 		force = on_damage
 		damtype = BURN
 		update_brightness()
@@ -458,7 +455,7 @@
 	name = "lit [initial(name)]"
 	attack_verb_continuous = string_list(list("burns", "singes"))
 	attack_verb_simple = string_list(list("burn", "singe"))
-	hitsound = 'sound/items/welder.ogg'
+	hitsound = 'sound/items/tools/welder.ogg'
 	force = on_damage
 	damtype = BURN
 
@@ -702,7 +699,7 @@
 	gender = PLURAL
 	name = "glowing slime extract"
 	desc = "Extract from a yellow slime. It emits a strong light when squeezed."
-	icon = 'icons/obj/science/slimecrossing.dmi'
+	icon = 'icons/obj/lighting.dmi'
 	icon_state = "slime"
 	inhand_icon_state = null
 	w_class = WEIGHT_CLASS_SMALL
@@ -777,7 +774,6 @@
 	light_power = 2
 	light_system = OVERLAY_LIGHT
 	color = LIGHT_COLOR_GREEN
-	icon = 'icons/obj/toys/toy.dmi'
 	icon_state = "glowstick"
 	base_icon_state = "glowstick"
 	inhand_icon_state = null
@@ -893,7 +889,7 @@
 	if(!fuel)
 		user.visible_message(span_suicide("[user] is trying to squirt [src]'s fluids into [user.p_their()] eyes... but it's empty!"))
 		return SHAME
-	var/obj/item/organ/internal/eyes/eyes = user.get_organ_slot(ORGAN_SLOT_EYES)
+	var/obj/item/organ/eyes/eyes = user.get_organ_slot(ORGAN_SLOT_EYES)
 	if(!eyes)
 		user.visible_message(span_suicide("[user] is trying to squirt [src]'s fluids into [user.p_their()] eyes... but [user.p_they()] don't have any!"))
 		return SHAME
