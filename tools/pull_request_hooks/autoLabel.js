@@ -121,6 +121,7 @@ export async function get_updated_label_set({ github, context }) {
 	console.log("the call is coming from inside the house");
 
 
+
 	let updated_labels = new Set();
 	for (let label of labels) {
 		updated_labels.add(label.name);
